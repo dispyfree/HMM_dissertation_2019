@@ -13,25 +13,16 @@ library(lambda.tools)
 estimProb <- function(delta, gamma, P, obs){
   n <- length(obs)
   
-  # create P-matrices
-  P_v <- sapply(obs$obs, function(x){
-    probs <- sapply(obs, P)
-    id <- diag(probs)
-    id
-  })
+  alpha_0 <- delta
+  alpha_t <- fold(1:n, function(t, acc){
+    probs <- sapply(P, function(f){ f(obs$obs[t])})
+    P_v <- diag(probs)
+    
+    acc %*% matPow(gamma, obs$time[t]) %*% P_v
+  }, alpha_0)
   
-  # take observation times into account
-  gamma_probs <- apply(obs$time, 2, function(t){
-    gamma^t
-  })
-  # 1^'
-  gamma_probs <- c(gamma_probs, t(rep.int(1, n)))
-  
-  #multiply 
-  tmp <- P_v %*% gamma_probs
-
-  fold(tmp, function(a, b){ a %*% b}, delta)
-  
+  likelihood <- alpha_t %*% t(t(rep.int(1, length(delta))))
+  likelihood
 }
 
 # checks consistency of distributions (either initial/stationary distribution or
@@ -41,4 +32,14 @@ checkConsistency <- function(delta){
   assert(all(rowSums(delta) == 1))
   # value are within [0,1]
   assert(all(delta >= 0 & delta <= 1))
+}
+
+
+matPow <- function(mat, p){
+  if(p  == 0){
+    mat
+  }else{
+    matPow(mat, p-1) %*% mat
+  }
+  
 }
