@@ -8,10 +8,13 @@ library(lambda.tools)
 # from state i to j
 # P: row vector of functions; each function is the pdf or pmf of a state's 
 # associated distribution
-# observations: data frame consisting of obs (observations) and (the 
-# offset in time of the associated observation with respect to its predecessor)
+# observations: data frame consisting of obs (observations) and time (absolute times)
 estimProb <- function(delta, gamma, P, obs){
-  n <- length(obs)
+  dims <- dim(obs)
+  n <- dims[1]
+  
+  # convert observation times to differences
+  obs$time <- c(0, diff(obs$time))
   
   alpha_0 <- delta
   alpha_t <- fold(1:n, function(t, acc){

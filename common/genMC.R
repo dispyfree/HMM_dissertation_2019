@@ -6,38 +6,60 @@ library(e1071)
 # P: row vector of functions drawing a random value for the respective state
 # T: number of samples from HMM
 
-# output: list(states = c(...), obs = c(...)) 
+# output: list(states = c(...), obs = c(...), prob = number)
+# prob: overall probability of this sample
 # where obs are observations
-genMC <- function(u, gamma, P, T){
+genMC <- function(u, gamma, P, P_density, T){
   
+  prob <- 1.0
   currentState <- rdiscrete(1, u)
   states <- c(currentState)
-  obs <- c(P[[currentState]]())
+  newObserv <- P[[currentState]]()
+  obs <- c(newObserv)
+  
+  prob <- prob * ddiscrete(currentState, u)
+  prob <- prob * P_density[[currentState]](newObserv)
   
   for (t in 1:T){
+    oldState <- currentState
+    oldProb <- tail(prob, n=1)
     currentState <- rdiscrete(1, gamma[currentState, ])
     states <- c(states, currentState)
-    obs <- c(obs, P[[currentState]]())
+    
+    newObserv <- P[[currentState]]()
+    obs <- c(obs, newObserv)
+
+    newProb <- oldProb * ddiscrete(currentState, gamma[oldState, ])
+    newProb <- oldProb * P_density[[currentState]](newObserv)
+    prob <- c(prob, newProb)
   }
   
-  list(states = states, obs = obs)
+  list(states = states, obs = obs, prob = prob)
 }
 
 
 # generates dummy weather model
-# state 1: low pressure, state 2: high pressure
-# observation 1: rain, obs 2: sunshine
+# state 1: high pressure, state 2: low pressure
+# observation 1: sunshine, obs 2: rain
 
 # use stationary distribution of transition matrix
-u1 <- c(0.5, 1) / 1.5
-gamma1 <- matrix(c(0.8, 0.2, 0.1, 0.9), nrow = 2, byrow = TRUE)
+u1 <- c(1.0, 0.5) / 1.5
+gamma1 <- matrix(c(0.9, 0.1, 0.2, 0.8), nrow = 2, byrow = TRUE)
 P <- c(function(){
-          rdiscrete(1, c(0.7, 0.3))
+          rdiscrete(1, c(0.9, 0.1))
 },
        function(){
-         rdiscrete(1, c(0.1, 0.9))
+         rdiscrete(1, c(0.3, 0.7))
        }
 )
 
-#sampleReal <- genMC(u1, gamma1, P, 1000)
+P_density <- c(function(x){
+  ddiscrete(x, c(0.9, 0.1))
+},
+function(x){
+  ddiscrete(x, c(0.3, 0.7))
+}
+)
+
+sampleReal <- genMC(u1, gamma1, P, P_density, 100)
 #write.csv(sampleReal, file='rainySample.csv')
