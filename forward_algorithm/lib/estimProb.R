@@ -14,7 +14,7 @@ estimProb <- function(delta, gamma, P, obs){
   n <- dims[1]
   
   # convert observation times to differences
-  obs$time <- c(0, diff(obs$time))
+  obs$time <- c(obs$time[1], diff(obs$time))
   
   alpha_0 <- delta
   alpha_t <- fold(1:n, function(t, acc){
@@ -39,7 +39,12 @@ checkConsistency <- function(delta){
 
 
 matPow <- function(mat, p){
-  if(p  == 0){
+  assert(p >= 0)
+  if(p == 0){
+    dims <- dim(mat)
+    diag(dims[1])
+  }
+  else if(p  == 1){
     mat
   }else{
     matPow(mat, p-1) %*% mat

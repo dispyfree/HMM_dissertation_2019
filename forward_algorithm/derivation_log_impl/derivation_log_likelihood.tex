@@ -1,0 +1,92 @@
+\documentclass[]{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+
+\usepackage{listings}
+
+\newcommand{\nn}{\mathbb{N}}
+\newcommand{\rn}{\mathbb{R}}
+\newcommand{\ta}[1]{\ensuremath{\tilde{\alpha}_{#1}}}
+
+%opening
+\title{Notes}
+\author{ Valentin Dreismann - 1864900}
+
+\begin{document}
+
+\maketitle
+
+\section{Derivation of Log-Likelihood}
+
+\subsection{Forward Algorithm}
+Let $u \in \rn^n$ be the initial distribution (which \textit{can} be the \textit{stationary distribution} $\delta$), $\Gamma$ the \textit{transition probability matrix} and $P(x)$ .... 
+
+Then the forward algorithm is defined as follows:
+\begin{align*}
+\alpha_0 &:= u \\
+\alpha_i &:= \alpha_{i-1} \, \Gamma^t \, P(x) \quad \text{for}\, i \geq 1
+\end{align*}
+
+The latter can be expressed as follows:
+\begin{align*}
+	\alpha_i(k) = \sum_{j=1}^m \alpha_{i-1}(j) \, \Gamma^{d_i}(j,k) \, P_{(k, k)}(x_i)
+\end{align*}
+
+We leverage the following identity:
+
+\begin{align}
+log_b\left( \sum_{i=0}^N a_i \right) = 
+log_b(a_0) + log_b\left(1 + \sum_{i=1}^N b^{log_b(a_i) - log_b(a_0)}\right)
+\label{log_simp}
+\end{align}
+
+In particular, we note that the expression on the right-hand side can be evaluated by \textit{exclusively} relying on the logarithm of $a_i$. 
+
+Let $ \beta_{j, k, i} := \Gamma^{d_i}(j,k) P_{(k, k)}(x_i)$. Note that neither $\Gamma^{d_i}(j,k)$ nor $ P_{(k, k)}(x_i)$ depend on the position within the MC; $\alpha_{i-1}(j)$ does, however. 
+
+Then, we have:
+\begin{equation}
+	\alpha_i(k) = \sum_{j=1}^m \underbrace{\alpha_{i-1}(j) \, \beta_{j, k, i}}_{a_{j, k}}
+	\label{decomp}
+\end{equation}
+
+By combining equations $(\ref{decomp})$ and $(\ref{log_simp})$ we obtain
+\begin{align}
+	log_b\left( \sum_{j=0}^m a_j \right) &=
+		log_b \left( \alpha_{i-1}(0) \, \beta_{0, k, i} \right) 
+		\, + \, 
+		log_b \left(
+			1 + \sum_{i=1}^m b^{
+				log_b(\alpha_{i-1}(j) \, \beta_{j, k, i})
+			   - log_b(\alpha_{i-1}(0) \, \beta_{0, k, i})
+			}
+		\right) \nonumber \\
+		&= log_b(\alpha_{i-1}(0)) + log_b(\beta_{0, k, i}) 
+		 + log_b \left(
+		 	1 + \sum_{i=1}^m b^{
+		 		log_b(\alpha_{i-1}(j)) + log_b(\beta_{j, k, i})
+		 		- log_b(\alpha_{i-1}(0)) - log_b(\beta_{0, k, i})
+	 		}
+		 \right)
+\end{align}
+
+Further setting 
+\[
+\tilde{\alpha_i}(k) := log \left( \alpha_i(k) \right) =  
+	log_b\left( \sum_{j=0}^m a_{j, k} \right)
+\]
+we obtain
+
+\begin{align*}
+	\ta{i}(k) = \ta{i-1}(0) + log \left(\beta_{0, k, i}\right) 
+	+ log \left( 1 + \sum_{j=1}^m b^{
+		\ta{i-1}(j) + log_b( \beta_{j, k, i}) - \ta{i-1}(0) - log_b(\beta_{0, k, i})		
+	}
+\right)
+\end{align*}
+
+w.l.o.g. the maximum element is the first (0).
+
+
+\end{document}
