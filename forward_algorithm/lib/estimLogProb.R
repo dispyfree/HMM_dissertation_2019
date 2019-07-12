@@ -59,5 +59,5 @@ estimLogProb <- function(delta, gamma, P, obs){
       }
       alpha_t <- newAlpha_t
   }
-  exp(alpha_t) %*% t(t(rep.int(1, m)))
+  alpha_t %*% t(t(rep.int(1, m)))
 }
