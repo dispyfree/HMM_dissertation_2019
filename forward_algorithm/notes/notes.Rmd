@@ -1,0 +1,43 @@
+---
+title: "Dissertation Notes"
+author: "Valentin Dreismann - 1864900"
+date: "July 15, 2019"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Firstly, we implemented a naiive matrix-based version of the forward algorithm:
+
+```{r, code = readLines("../lib/estimProb.R")}
+```
+
+To test the code, we use two models:
+
+```{r, code = readLines("../lib/rainModel.R")}
+```
+
+```{r, code = readLines("../lib/simpleSwitchingModel.R")}
+```
+
+
+Test data was generated using
+```{r, code = readLines("../../common/genMC.R")}
+```
+
+
+
+## Log implementation
+
+```{r}
+library(imager)
+myimg <- load.image("../superiority_log_approach.png")
+plot(myimg,  axes=FALSE)
+```
+

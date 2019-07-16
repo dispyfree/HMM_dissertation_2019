@@ -8,16 +8,16 @@ gamma1 <- matrix(c(0.1,0.9, 0.1, 0.9), nrow=2, ncol=2, byrow=TRUE)
 P1_density <- c(
   function(x){ 
     if(x == 0){
-      0.9
+      1.0
     }
     else{
-      0.1
+      0
     }},
   function(x){ 
     if(x == 1){
-      0.9
+      1.0
     }
     else{
-      0.1
+      0
     }}
 )

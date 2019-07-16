@@ -1,3 +1,6 @@
+#todo: handle probability of zero explicitly! (if density is exactly zero for certain)
+# values, this implementation breaks!
+
 # log-space implementation for discrete timetime-homogeneous HMM
 # notation:
 # delta: row vector of initial probabilities; should equal stationary distribution
@@ -43,21 +46,64 @@ estimLogProb <- function(delta, gamma, P, obs){
       maxA_t <- which.max(alpha_t)
       
       # alpha_t(k)
-      newAlpha_t <- rep.int(0, m)
+      newAlpha_t <- rep.int(-Inf, m)
       for(k in 1:m){
         newAlpha_t[k] <- alpha_t[maxA_t]  + log(beta[maxA_t, k])
         
-        # for exp(1 + x), calculate x
-        x <- 0
+        # for log(1 + x), calculate x
+        x <- -Inf
         for(j in 1:m){
           if(j != maxA_t){
-            x <- x + exp( alpha_t[j] + log(beta[j, k]) - alpha_t[maxA_t] 
-                          - log(beta[maxA_t, k]))
+            x <- addIfNotInfty(x, exp( alpha_t[j] + log(beta[j, k]) - alpha_t[maxA_t] 
+                          - log(beta[maxA_t, k])))
           }
         }
-        newAlpha_t[k] <- newAlpha_t[k] + log1p(x)
+        newAlpha_t[k] <- addIfNotInfty(newAlpha_t[k], suppressWarnings(log1p(x)))
       }
       alpha_t <- newAlpha_t
   }
-  alpha_t %*% t(t(rep.int(1, m)))
+  #alpha_t %*% t(t(rep.int(1, m)))
+  logSum(selectIfFinite(alpha_t))
+}
+
+addIfNotInfty <- function(no1, no2){
+  if(!is.finite(no2))
+    no1
+  else if(!is.finite(no1))
+    no2
+  else
+    no1 + no2
+}
+
+# returns zero iff no is infinity/-infinity
+# used to discard log(0) values by not adding them up
+zeroIfInfty <- function(no){
+  if(is.finite(no)){
+    no
+  }
+  else{
+    0
+  }
+}
+
+selectIfFinite <- function(x){
+  Filter(is.finite, x)
+}
+
+# source: 
+# https://en.wikipedia.org/wiki/List_of_logarithmic_identities#Summation/subtraction
+# transforms (log(a_1), log(a_2), ...) into log(sum(a_1, a_2, ...))
+logSum <- function(log_a){
+  maxA <- which.max(log_a)
+  
+  res <- log_a[maxA]
+  if(length(log_a) == 1)
+    res
+  else{
+    x <- sum(map(log_a[-maxA], function(log_a_i){
+      exp(log_a_i - log_a[maxA])
+    }))
+    
+    res + log1p(x)
+  }
 }
