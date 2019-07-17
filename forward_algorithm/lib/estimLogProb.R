@@ -1,3 +1,4 @@
+library(testit)
 #todo: handle probability of zero explicitly! (if density is exactly zero for certain)
 # values, this implementation breaks!
 
@@ -31,14 +32,17 @@ estimLogProb <- function(delta, gamma, P, obs){
   if(obs$time[1] == 0){
     probs <- sapply(P, function(f){ f(obs$obs[1])})
     P_v <- diag(probs)
-    alpha_t <- log(delta * P_v)
+    alpha_t <- log(delta %*% P_v)
     
     # remove first observation
     obs <- obs[2:n, ]
+    dims <- dim(obs)
+    n <- dims[1]
   }
   
   for (t in 1:n){
-      probs <- sapply(P, function(f){ f(obs$obs[t])})
+      probs <- sapply(P,
+                      function(f){ f(obs$obs[t])})
       P_v <- diag(probs)
       beta <- matPow(gamma, obs$time[t]) %*% P_v
       
@@ -106,4 +110,19 @@ logSum <- function(log_a){
     
     res + log1p(x)
   }
+}
+
+
+matPow <- function(mat, p){
+  assert(p >= 0)
+  if(p == 0){
+    dims <- dim(mat)
+    diag(dims[1])
+  }
+  else if(p  == 1){
+    mat
+  }else{
+    matPow(mat, p-1) %*% mat
+  }
+  
 }
