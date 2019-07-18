@@ -14,7 +14,7 @@ pSun <- matrix(c(0.9, 0.0, 0.0, 0.3), nrow = 2, byrow=TRUE)
 pRain <- matrix(c(0.1, 0.0, 0.0, 0.7), nrow = 2, byrow=TRUE)
 superSimpleProb <- t(u1) %*% gamma1 %*% pSun %*% gamma1  %*% pRain %*% gamma1  %*% pSun %*%  matrix(rep.int(1, 2), ncol= 1)
 
-superSimpleData <- data.frame(time = c(1:3), obs = c(1,2,1))
+superSimpleData <- data.frame(time = c(1:3), obs = c(1, 0, 1))
 computedProb <- estimProb(u1, gamma1, P_density, superSimpleData)
 assert(abs(superSimpleProb - computedProb)  < threshold)
 
