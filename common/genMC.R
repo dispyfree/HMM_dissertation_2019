@@ -61,5 +61,5 @@ function(x){
 }
 )
 
-sampleReal <- genMC(u1, gamma1, P, P_density, 100)
+#sampleReal <- genMC(u1, gamma1, P, P_density, 100)
 #write.csv(sampleReal, file='rainySample.csv')

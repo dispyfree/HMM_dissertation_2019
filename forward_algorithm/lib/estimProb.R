@@ -42,12 +42,14 @@ estimBeta <- function(delta, gamma, P, obs, startT){
   
   # convert observation times to differences
   obs$time <- c(obs$time[1], diff(obs$time))
-  beta_0 <- diag(m)
-  beta_t <- fold((startT+1):n, function(t, acc){
+  beta_0 <- t(t(rep.int(1, length(delta))))
+  
+  
+  beta_t <- fold(startT:n, function(t, acc){
     probs <- sapply(P, function(f){ f(obs$obs[t])})
     P_v <- diag(probs)
     
-    acc %*% matPow(gamma, obs$time[t]) %*% P_v
+     matPow(gamma, obs$time[t]) %*% P_v %*% acc
   }, beta_0);
   beta_t
 }
