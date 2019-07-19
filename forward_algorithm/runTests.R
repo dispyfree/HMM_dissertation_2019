@@ -9,7 +9,7 @@ threshold <- 0.0001
 # simple rain model as defined in lecture nodes (slide set 2)
 # chech the probability of (sun, rain, sun) is equal 
 # define calculation manually and also run algorithm, compare results
-source('lib/rainModel.R')
+source('lib/models/rainModel.R')
 pSun <- matrix(c(0.9, 0.0, 0.0, 0.3), nrow = 2, byrow=TRUE)
 pRain <- matrix(c(0.1, 0.0, 0.0, 0.7), nrow = 2, byrow=TRUE)
 superSimpleProb <- t(u1) %*% gamma1 %*% pSun %*% gamma1  %*% pRain %*% gamma1  %*% pSun %*%  matrix(rep.int(1, 2), ncol= 1)
@@ -21,18 +21,18 @@ assert(abs(superSimpleProb - computedProb)  < threshold)
 
 # test log implementation
 logComputedProb <- estimLogProb(u1, gamma1, P_density, superSimpleData)
-assert(abs(superSimpleProb - logComputedProb)  < threshold)
+assert(abs(superSimpleProb - exp(logComputedProb))  < threshold)
 
 simplestProb<- t(u1) %*% pSun %*% gamma1 %*% pRain %*% gamma1  %*% pSun %*% matrix(rep.int(1, 2), ncol= 1)
 
-simplestData <- data.frame(time = c(1, 2, 3), obs = c(1, 2, 1))
+simplestData <- data.frame(time = c(1, 2, 3), obs = c(1,0,1))
 naiivelyEstimatedProb <- estimProb(u1, gamma1, P_density, simplestData)
 logComputedProb <- estimLogProb(u1, gamma1, P_density, simplestData)
 assert(abs(simplestProb - naiivelyEstimatedProb)  < threshold)
-assert(abs(simplestProb - logComputedProb)  < threshold)
+assert(abs(simplestProb - exp(logComputedProb))  < threshold)
 
 
-source('lib/simpleSwitchingModel.R')
+source('lib/models/simpleSwitchingModel.R')
 obs1 <- data.frame(obs = c(1, 1, 1, 1, 0, 1, 1, 0 , 1, 1),
                    time = 1:10) #likely
 obs12 <- data.frame(obs = c(0, 0, 0, 1, 0, 1, 1, 0, 0, 1),
@@ -44,7 +44,19 @@ assert(p1 > p2)
 
 
 
+ source('lib/models/ourSecondPoissonEx.R')
+ obs <- data.frame(obs = c(1, 2), time = c(0, 1))
+ prob<- estimProb(u1, gamma1, P_density, obs)
+ logProb<- estimLogProb(u1, gamma1, P_density, obs)
+ 
+ pOne <- diag(c(dpois(1, 1), dpois(1, 2)))
+ pTwo <- diag(c(dpois(2, 1), dpois(2, 2)))
+ 
+ realProb <- t(u1) %*% pOne %*% gamma1 %*% pTwo %*% matrix(rep.int(1, 2), ncol= 1)
 
+
+ assert(abs(prob - exp(logProb))  < threshold)
+ assert(abs(realProb - exp(logProb))  < threshold)
 
 
 

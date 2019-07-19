@@ -46,27 +46,29 @@ estimLogProb <- function(delta, gamma, P, obs){
       P_v <- diag(probs)
       beta <- matPow(gamma, obs$time[t]) %*% P_v
       
-      # find maximum alpha to apply formula
-      maxA_t <- which.max(alpha_t)
-      
       # alpha_t(k)
       newAlpha_t <- rep.int(-Inf, m)
       for(k in 1:m){
+        # find maximum alpha to apply formula
+        maxA_t <- which.max(alpha_t + t(log(beta[,k])))
+        
         newAlpha_t[k] <- alpha_t[maxA_t]  + log(beta[maxA_t, k])
+        maxContrib <- newAlpha_t[k]
         
         # for log(1 + x), calculate x
         x <- -Inf
         for(j in 1:m){
           if(j != maxA_t){
-            x <- addIfNotInfty(x, exp( alpha_t[j] + log(beta[j, k]) - alpha_t[maxA_t] 
-                          - log(beta[maxA_t, k])))
+            optionContrib <- alpha_t[j] + log(beta[j, k])
+            if(is.finite(optionContrib)){
+              x <- addIfNotInfty(x, exp( optionContrib - maxContrib))
+            }
           }
         }
         newAlpha_t[k] <- addIfNotInfty(newAlpha_t[k], suppressWarnings(log1p(x)))
       }
       alpha_t <- newAlpha_t
   }
-  #alpha_t %*% t(t(rep.int(1, m)))
   logSum(selectIfFinite(alpha_t))
 }
 
