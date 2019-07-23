@@ -10,4 +10,8 @@ csvFilePath = '../common/rainySample.csv'
 rainySample <- read_csv("~/data/education/university/warwick/statistics/dissertation/programming/HMM_dissertation_2019/common/rainySample.csv")
 
 rainySample$time <- rainySample$X1 - 1
-directGibbsSampler(u1, gamma1, P_density, rainySample)
+res <- directGibbsSampler(u1, gamma1, P_density, rainySample)
+maxStates <- extractMaxFromHistory(res$stateHistory, 2)
+sum((rainySample$states[1:100] - maxStates)^2)
+
+
