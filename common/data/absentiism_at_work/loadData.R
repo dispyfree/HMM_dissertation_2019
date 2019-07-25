@@ -1,5 +1,5 @@
 library(readr)
-absentiism <- read_delim("data/education/university/warwick/statistics/dissertation/programming/HMM_dissertation_2019/common/data/absentiism_at_work/Absenteeism_at_work.csv",  ";", escape_double = FALSE, trim_ws = TRUE)
+absentiism <- read_delim("../common/data/absentiism_at_work/Absenteeism_at_work.csv",  ";", escape_double = FALSE, trim_ws = TRUE)
 
 smallDat <- data.frame(ID = absentiism$ID, month = absentiism$`Month of absence`, hours = absentiism$`Absenteeism time in hours`)
 
@@ -16,6 +16,8 @@ timeSeries <- c()
 
 for(idIndex in 1:length(ids)){
   currentID <- ids[idIndex]
+  # add a zero for the very first month (which will then jut add unto the zero)
+  timeSeries <- c(timeSeries, 0)
   
   subjectRows <- smallDat[which(smallDat$ID == currentID),]
   # first month doesn't have an offset
@@ -25,13 +27,21 @@ for(idIndex in 1:length(ids)){
   for(r in 1:dims[1]){
     nextRowMonth <- subjectRows$month[r]
     # pad with zeros for ommitted months
-    timeSeries <- c(timeSeries, rep.int(0, max(0, nextRowMonth - currentMonth - 1)))
+    if(nextRowMonth >= currentMonth)
+      timeSeries <- c(timeSeries, rep.int(0, max(0, nextRowMonth - currentMonth - 1)))
     
     #if it's the same month, just keep adding up to the prior month
     if(currentMonth == nextRowMonth){
       l <- length(timeSeries)
       timeSeries[l] <- timeSeries[l] + subjectRows$hours[r] 
-    }else{
+    }
+    #if the months jumped a year
+    else if(nextRowMonth < currentMonth){
+      noToPad <- 12 - currentMonth + (nextRowMonth - 1)
+      timeSeries <- c(timeSeries, rep.int(0, noToPad))
+      timeSeries <- c(timeSeries, subjectRows$hours[r])
+    }
+    else{
       timeSeries <- c(timeSeries, subjectRows$hours[r])
     }
     currentMonth <- nextRowMonth
@@ -39,5 +49,7 @@ for(idIndex in 1:length(ids)){
 }
 
 
+absentiismObs <- data.frame(time = 1:length(timeSeries), obs = timeSeries)
+write.csv(absentiismObs, file='../common/data/absentiism_at_work/absentiismObs.csv')
 
 
