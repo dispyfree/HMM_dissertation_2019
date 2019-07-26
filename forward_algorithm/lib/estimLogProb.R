@@ -1,4 +1,6 @@
 library(testit)
+library(purrr)
+
 #todo: handle probability of zero explicitly! (if density is exactly zero for certain)
 # values, this implementation breaks!
 
@@ -33,7 +35,7 @@ estimLogProb <- function(delta, gamma, P, obs){
     probs <- sapply(P, function(f){ f(obs$obs[1])})
     P_v <- diag(probs)
     alpha_t <- log(delta %*% P_v)
-    
+    print(alpha_t)
     # remove first observation
     obs <- obs[2:n, ]
     dims <- dim(obs)
@@ -68,6 +70,7 @@ estimLogProb <- function(delta, gamma, P, obs){
         newAlpha_t[k] <- addIfNotInfty(newAlpha_t[k], suppressWarnings(log1p(x)))
       }
       alpha_t <- newAlpha_t
+      print(newAlpha_t)
   }
   logSum(selectIfFinite(alpha_t))
 }
@@ -106,9 +109,9 @@ logSum <- function(log_a){
   if(length(log_a) == 1)
     res
   else{
-    x <- sum(map(log_a[-maxA], function(log_a_i){
+    x <- sum(unlist(map(log_a[-maxA], function(log_a_i){
       exp(log_a_i - log_a[maxA])
-    }))
+    })))
     
     res + log1p(x)
   }

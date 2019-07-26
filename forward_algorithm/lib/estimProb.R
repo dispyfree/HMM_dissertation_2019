@@ -15,6 +15,11 @@ estimProb <- function(delta, gamma, P, obs){
   likelihood
 }
 
+#shorthand, gets passed in theta
+estimTProb <- function(theta, P_dens, obs){
+  estimProb(theta$delta, theta$gamma, P_dens, obs)
+}
+
 # calculates alpha up to timestep t
 # alpha as defined in Zucchini
 estimAlpha <- function(delta, gamma, P, obs, finalT){
