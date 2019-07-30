@@ -20,14 +20,16 @@ assert(abs(superSimpleProb - computedProb)  < threshold)
 
 
 # test log implementation
-logComputedProb <- estimLogProb(u1, gamma1, P_density, superSimpleData)
+ret <- estimLogProb(u1, gamma1, P_density, superSimpleData)
+logComputedProb <- ret$logSum
 assert(abs(superSimpleProb - exp(logComputedProb))  < threshold)
 
 simplestProb<- t(u1) %*% pSun %*% gamma1 %*% pRain %*% gamma1  %*% pSun %*% matrix(rep.int(1, 2), ncol= 1)
 
 simplestData <- data.frame(time = c(1, 2, 3), obs = c(1,0,1))
 naiivelyEstimatedProb <- estimProb(u1, gamma1, P_density, simplestData)
-logComputedProb <- estimLogProb(u1, gamma1, P_density, simplestData)
+ret <- estimLogProb(u1, gamma1, P_density, simplestData)
+logComputedProb <- ret$logSum
 assert(abs(simplestProb - naiivelyEstimatedProb)  < threshold)
 assert(abs(simplestProb - exp(logComputedProb))  < threshold)
 
@@ -47,7 +49,8 @@ assert(p1 > p2)
  source('lib/models/ourSecondPoissonEx.R')
  obs <- data.frame(obs = c(1, 2), time = c(0, 1))
  prob<- estimProb(u1, gamma1, P_density, obs)
- logProb<- estimLogProb(u1, gamma1, P_density, obs)
+ ret <- estimLogProb(u1, gamma1, P_density, obs)
+ logProb <- ret$logSum 
  
  pOne <- diag(c(dpois(1, 1), dpois(1, 2)))
  pTwo <- diag(c(dpois(2, 1), dpois(2, 2)))

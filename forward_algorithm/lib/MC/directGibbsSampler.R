@@ -92,11 +92,6 @@ getInitialStateEstimate <- function(P_dens, obs){
 }
 
 
-drawRandomGamma <- function(m){
-  gamma <- matrix(rep.int(1/m, m*m), ncol=m)
-  gamma
-}
-
 gammaMHStep <- function(delta, gamma, P_dens, obs, states){
   dims <- dim(gamma)
   n <- dims[1]

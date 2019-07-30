@@ -26,6 +26,8 @@ estimLogProb <- function(delta, gamma, P, obs){
   # \tilde{\alpha}
   alpha_t <- log(delta)
   
+  alphas <- matrix(alpha_t, nrow = 1)
+  
   # work around the corner case that the first observation is at t=0
   # this will break the log decomposition as log(0) is undefined and gamma^0 
   # is id(m).
@@ -35,7 +37,9 @@ estimLogProb <- function(delta, gamma, P, obs){
     probs <- sapply(P, function(f){ f(obs$obs[1])})
     P_v <- diag(probs)
     alpha_t <- log(delta %*% P_v)
-    print(alpha_t)
+    
+    alphas <- rbind(alphas, alpha_t)
+    
     # remove first observation
     obs <- obs[2:n, ]
     dims <- dim(obs)
@@ -70,10 +74,16 @@ estimLogProb <- function(delta, gamma, P, obs){
         newAlpha_t[k] <- addIfNotInfty(newAlpha_t[k], suppressWarnings(log1p(x)))
       }
       alpha_t <- newAlpha_t
-      print(newAlpha_t)
+      
+      alphas <- rbind(alphas, alpha_t)
   }
-  logSum(selectIfFinite(alpha_t))
+  list('logSum' = logSum(selectIfFinite(alpha_t)), "alphas" = alphas)
 }
+
+estimTLogProb <- function(theta, P_dens, obs){
+  estimLogProb(theta$delta, theta$gamma, P_dens, obs)
+}
+
 
 addIfNotInfty <- function(no1, no2){
   if(!is.finite(no2))

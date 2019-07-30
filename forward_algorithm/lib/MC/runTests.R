@@ -12,6 +12,6 @@ rainySample <- read_csv("~/data/education/university/warwick/statistics/disserta
 rainySample$time <- rainySample$X1 - 1
 res <- directGibbsSampler(u1, gamma1, P_density, rainySample)
 maxStates <- extractMaxFromHistory(res$stateHistory, 2)
-sum((rainySample$states[1:100] - maxStates)^2)
+sum((rainySample$states - maxStates)^2)
 
 
