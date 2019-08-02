@@ -12,7 +12,8 @@ sampleHiddenStates <- function(theta, P_dens, obs){
   probs <- estimTLogProb(theta, P_dens, obs)
   alphas <- probs$alphas
   
-  dims <- dim(obs)
+  dims <- dim(alphas)
+  # one more alphas than observations due to initial distribution
   n <- dims[1]
   
   # sample state from last alpha
@@ -98,14 +99,18 @@ estimGamma <- function(m, hiddenStates){
 
 sampleBernoulli <- function(m, hiddenStates, obs){
   probs <- rep(0.0, m)
+  # the initial distribution doesn't have an attached observation
+  # and hence is disregarded when sampling Bernoulli variables 
+  t <- tail(hiddenStates, -1)
   for(state in 1:m){
     # extract relevant observations and their probabilities
-    regimes <- hiddenStates == state
+    regimes <- t == state
 
     estimP <- sum(obs$obs[regimes]) / sum(regimes)
     #using uniform prior, we can just use this estimate
     probs[state] <- estimP
   }
+  # enforce increasing ps
   probs
 }
 
@@ -117,10 +122,10 @@ sampleTheta  <- function (m, hiddenStates, obs, oldDelta, noPriorRuns){
   oldDelta <- oldDelta * noPriorRuns
   oldDelta[hiddenStates[1]] <- oldDelta[hiddenStates[1]] + 1
   oldDelta <- oldDelta / (noPriorRuns + 1)
-  
+  sampleBernoulli(m, hiddenStates, obs)
   list("gamma" = sampleGamma(m, hiddenStates, alphaPrior), 
-       "statePara" =  sampleBernoulli(m, hiddenStates, obs), #c(0.9, 0.3),
+       "statePara" = sampleBernoulli(m, hiddenStates, obs),  #c(0.9, 0.3), 
        "noRuns" = noPriorRuns + 1,
-       "delta" = c(1.0, 0.5) / 1.5 # oldDelta
+       "delta" = oldDelta #c(1.0, 0.5) / 1.5
        )
 }
