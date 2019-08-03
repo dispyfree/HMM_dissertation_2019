@@ -1,0 +1,53 @@
+\section{Motivation}
+
+Let us first motivate the model presented herein. Suppose we are interested in drawing inferences from a system which is not directly observable. 
+
+In particular, let us assume that the system comprises $m \in \nn$ states between which it switches. The state the system is in at time $t \in \nn$ is given by the value (in $\left(1, \dots, m\right)$) the random variable $C_t$ assumes. Hence, the behaviour of the system through time can be described as a \textit{process} $\left(C_1, C_2, \dots \right)$. As those states cannot be observed, they are also referred to as \textit{hidden states}. 
+
+At each point of time, the system emits an \textit{observation}, which can be observed. The state the system is it at any given time governs which value is emitted at that time. Hence, each state has an associated distribution, according to which the observations are distributed. Let us denote the observation at time $t \in \nn$ by $X_t$. Then, analogously to the sequence of states, we have a sequence of observations $\left(X_1, X_2, \dots \right)$ where $X_t$ is distributed according to the distribution indicated by $C_t$. 
+
+The aim of the algorithms developed throughout this dissertation is to draw inferences on the transitions between states, the sequence of the hidden states themselves  and the parameters describing their respective distributions. 
+
+
+
+
+
+\section{Definition}
+
+
+A \textit{Hidden Markov Model} (abbrev.: HMM) - for the purposes of this dissertation - comprises the following: 
+\begin{itemize}
+\item an unobservable, discrete-time, discrete-space time-homogeneous \textit{Markov Process} 
+$\left(C_1, C_2, \dots \right)$ with $m \in \nn$ distinct hidden states.\\
+The states' realisations determine the observations' distributions. 
+
+\item a transition probability matrix (abbrev.: tpm) $\tpm \in \R_+^{m \times m}$ governing the state transitions of the Markov Chain. The tpm exhaustively describes $\prob{C_{t+1}}{C_t}$.  
+
+\item observable random variables $X_1, X_2, \dots$. The random variable $X_t$ is distributed as the distribution indicated by $C_t$. In particular, their distribution depends \textit{only} on an unobservable state. 
+\end{itemize}
+Without loss of generality we shall assume that $(C_t)$ is indexed by $\nn$. 
+
+
+Note that while $\tpm$ describes the probability $\prob{C_{t+1}}{C_t}$, it does not give us any information on the \textit{initial distribution} of the chain, i.e. on $C_1$. Let us denote this initial distribution by  $\delta \in [0,1]^m$ with $\sum \delta_i = 1$. A common choice is the so-called \textit{stationary distribution}, which we shall explain later on. 
+
+We shall use $\lambda$ to parameterise the states' distributions and use $\Theta := \left(\delta, \lambda, \Gamma \right)$ to describe all parameters of the model.
+
+Furthermore, denote $\left(C_1, C_2, \dots \right)$ as $\allC$ and $\left(X_1, X_2, \dots \right)$ as $\allX$. 
+
+The intuitive definitions above can be described mathematically as follows:
+\begin{itemize}	
+	\item $\prob{C_{t+1}}{\Theta, \allX, \allC} = \prob{C_{t+1}}{C_t}$
+	
+	\item $\prob{C_{t+1} = i}{C_t = j} = \tpm_{i, j} $ 
+	
+	\item $\prob{X_t}{ \Theta, \allX, \allC} = \prob{X_t}{C_t}$
+\end{itemize}
+
+
+The dependencies can easily be visualised in the following way:
+\begin{figure}[H]
+\includegraphics[width=0.8\linewidth]{img/hmm_dependencies.png}
+\caption{Graph of dependencies within an HMM; figure as featured in Zucchini}
+\end{figure}
+Here, each circle represents a random variable and each arrow a conditional dependency. In particular, each variable is conditionally independent of all other variables, if it is conditioned on the variable it is connected to in this graph. 
+

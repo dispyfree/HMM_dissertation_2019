@@ -1,0 +1,149 @@
+\documentclass[11pt,a4paper]{report}
+
+% Warwick thesis template from: https://www2.warwick.ac.uk/fac/sci/physics/staff/academic/mhadley/wthesis/
+
+\usepackage{warwickthesis,setspace,graphicx}
+\usepackage[numbers,sort&compress,square]{natbib}
+\usepackage{enumerate}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{float}
+\input{customCommands}
+
+% no identation! 
+\setlength{\parindent}{0pt}
+
+\phdthesis
+
+%\thesisdraft                       %% Uncomment this if you want a draft
+                                     %% version; this will print a timestamp
+                                     %% on each page of your thesis.
+
+\leftchapter                       %% Uncomment one of these if you want
+% \centerchapter                     %% left-justified, centered or
+% \rightchapter                      %% right-justified chapter headings.
+                                     %% Chapter headings includes the
+                                     %% Contents, Acknowledgments, Lists
+                                     %% of Tables and Figures and the Vita.
+                                     %% The default is \centerchapter.
+
+\onehalfspacing                      %! This is the default and gives an acceptable "double spaced" thesis
+                                     %! It is the minimum spacing accepted by the graduate school, and there is no reason to increase the spacing.
+% \singlespacing                     %! Uncomment if you want single-spacing,
+%\doublespacing                     %! uncomment if you want real double-spacing for some perverse reason.
+
+\setlength{\textheight}{8.75in}      %! Uncomment this for a slightly
+                                     %! longer page. The default is now 8.5in (from Feb 2010)
+                                     %! regulations require page numbers to be at least 1.5cm into the page.
+                                     %! You can even try a longer page to save paper.
+
+\renewcommand{\thesisdepartmentname}{Department of Statistics}
+
+\renewcommand{\thesissubmission}{
+	Submitted to the University of Warwick\\
+	in partial fulfilment of the requirements\\
+	for admission to the degree of}
+
+\renewcommand{\thesisauthor}{Gabriel Valentin Dreismann}
+\renewcommand{\thesisauthorno}{1864900}
+
+
+\renewcommand{\thesismonth}{Aug.}
+\renewcommand{\thesisyear}{2019}
+\renewcommand{\thesistitle}{Bayesian inference under hidden Markov models}
+
+
+
+\renewcommand{\thesistitletypesize}{\huge}
+
+\renewcommand{\thesisauthorpreviousdegrees}{}
+                                     %% Your previous degrees, abbreviated;
+                                     %% separate multiple degrees by commas.
+
+\renewcommand{\thesissupervisor}{Dr. Xavier Didelot}
+                                     %% Your thesis supervisor; use mixed-case
+                                     %% and don't use any titles or degrees.
+
+\renewcommand{\thesisauthoraddress}{}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%
+%%% The following commands are all optional, but useful if your requirements
+%%% are different from the default values in utthesis.sty.  To use them,
+%%% simply uncomment (remove the leading %) the line(s).
+
+\renewcommand{\thesisdegree}{Msc. Statistics}  %% Uncomment this only if your thesis
+                                     %% degree is NOT "DOCTOR OF PHILOSOPHY"
+                                     %% for \phdthesis or "MASTER OF ARTS"
+                                     %% for \mastersthesis.  Provide the
+                                     %% correct FULL OFFICIAL name of
+                                     %% the degree.
+
+ \renewcommand{\thesisdegreeabbreviation}{Msc. Statistics}
+                                     %% Use this if you also use the above
+                                     %% command; provide the OFFICIAL
+                                     %% abbreviation of your thesis degree.
+
+\renewcommand{\thesistype}{Dissertation}    %% Use this ONLY if your thesis type
+                                     %! is NOT "Thesis"
+                                     %% Provide the OFFICIAL type of the
+                                     %% thesis; use mixed-case.
+
+% \renewcommand{\thesistypist}{...}  %% Use this to specify the name of
+                                     %% the thesis typist if it is anything
+                                     %% other than "the author".
+
+%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Uncomment this to show the frame of the pdf document to check layout issues.
+%\usepackage{showframe}
+
+\input{Header}
+
+\begin{document}
+
+
+% Include library deposit form
+\iffalse
+\includepdf[
+	pages=-
+]{Preamble/library_declaration_and_deposit_agreement.pdf}
+\fi
+
+\thesistitlebrandingpage
+
+%%* Start roman page numbering here for contents, etc
+%! Begins roman numerals start from page i.
+\pagenumbering{roman}
+
+\microtypesetup{protrusion=false} % disables protrusion locally in the document
+\tableofcontents
+\listoftables
+\listoffigures
+%{\let\clearpage\relax\listofalgorithms} % Uncomment if you have algorithms
+\microtypesetup{protrusion=true} % enables protrusion
+
+
+\include{Preamble/Declarations}
+
+\include{Preamble/Abbreviations}
+
+%%* Start arabic numbering of main text here
+\pagenumbering{arabic} %! Begins arabic numerals start from page 1.
+
+
+\input{contents.tex}
+
+\appendix
+\include{Appendices/Appendices}
+
+%\renewcommand\bibfont{\small} % You might want a smaller bib font
+
+\bibliographystyle{plainnat}
+\bibliography{Bib/bib}
+
+\end{document}
