@@ -1,0 +1,126 @@
+There are several approaches to solve for $\Theta$ or $\allC$, the most common being Maximum Likelihood Estimation (abbrev. MLE), Expectation-Maximization (abbrev. EM) and Markov Chain Monte Carlo Methods (abbrev. MCMC). This thesis shall explore the latter in depth. Nonetheless, we provide a brief account of the other techniques as well.
+
+In order to outline the core ideas behind each approach, a few preliminaries are needed. These are shortly introduced. The presentation herein follows the notation in Zucchini.
+
+
+\section{Forward Probabilities}
+For the algorithms to follow, we need a means to compute the probability of being in a certain state at a certain time, as well as the probability of a string of observations occuring, given $\Theta$. The forward probabilities provide such a means. 
+
+To be precise, forward probabilities provide a \textit{dynamic programming} approach to this problem; they allow us to express the solution to a bigger problem as a set of sub-problems. 
+
+
+\subsection{Mathematical approach}
+Suppose that we are able to compute the quantity 
+\[
+	\alpha_t(j) = P\left(X_1 = x_1, X_2 = x_2, \dots, X_t = x_t, C_t = j\right)
+\]
+
+For $t=0$ this is obvious, as we have $\alpha_0 = \delta$\footnote{(there are no observations available)}. 
+
+Then we able to compute $\alpha_{t+1}(i)$ as follows:
+\begin{align*}
+	\alpha_{t+1}(i) 
+	&=  P\left(X^{(t+1)} = x^{(t+1)},  C_{t+1} = i\right) \\
+	 &=  \sum_{k=1}^m P\left(X^{(t+1)} = x^{(t+1)}, C_{t+1} = i, C_t = k\right) \\ 
+	 &= \sum_{k=1}^m \prob{X^{(t+1)} = x^{(t+1)}, C_t = k}{ C_{t+1} = i} P \left( C_{t+1} = i \right) \\
+	 &= \sum_{k=1}^m \prob{X^{(t)} = x^{(t)}, C_t = k}{ C_{t+1} = i} \prob{X_{t+1} = x_{t+1}}{ C_{t+1} = i} P \left( C_{t+1} = i \right) \\
+	 &= \sum_{k=1}^m P \left( X^{(t)} = x^{(t)}, C_t = k, C_{t+1} = i  \right) p_i(x_{t+1}) \\
+	 &= \sum_{k=1}^m \prob{
+	 	X^{(t)} = x^{(t)}, C_{t+1} = i}{C_t = k} P\left( C_t = k\right) p_i(x_{t+1})\\
+ 	&= \sum_{k=1}^m \prob{
+ 		X^{(t)} = x^{(t)}}{C_t = k} \prob{ C_{t+1} = i}{C_t = k} P\left( C_t = k\right) p_i(x_{t+1})\\
+ 	&=  \sum_{k=1}^m \alpha_t(k)  \, \tpm_{k, i} \, p_i(x_{t+1}) \\
+\end{align*}
+
+Note that there are $\bigO{m}$ calculations for each time step and entry of $\alpha_t$, hence $\bigO{m^2}$ calculations for each $\alpha_t$ and $\bigO{T m^2}$ calculations for processing of the entire chain. Hence, this approach is also suitable for very long chains.
+ 
+Also by the law of total probability, we have
+\[
+\sum_j \alpha_t(j) = P\left(X_1 = x_1, X_2 = x_2, \dots, X_T = x_t \right)
+\] 
+i.e. the probability (or density) of this string of observations occuring. 
+
+
+\subsection{Computational Approach}
+
+The computations given below solely express the approach described above in a convenient matrix notation. 
+Let 
+\begin{align*}
+	P(x_i) := \begin{pmatrix}
+		p_1(x_i) & \dots    & \dots & 0  \\
+		0        & p_2(x_i) & \dots & 0  \\
+		\vdots   & \vdots   & \vdots& \vdots \\ 
+		0        & \dots    & \dots & p_m(x_i)
+	\end{pmatrix}
+\end{align*}
+where $x_i$ is a realisation and $p_1, \dots, p_m$ are the states' probability functions in case the distributions are discrete or probability density functions otherwise. 
+
+
+Note that if the observations are not consecutive, the powers of $\tpm$ need to be adjusted accordingly:
+\[
+P(X_1 = x_1, X_3 = x_3, X_T = x_t) = \delta \,  P(x_1) \, \tpm^{(3-1)} \,  P(x_3) \,  \tpm^{(T-3)} \, P(x_t)
+\]
+
+
+
+\section{Maximum Likelihood Estimation}
+
+As we have developed a way to compute $\prob{X^T=x^t}{\Theta}$, we can use appropriate method to maximise this expression. In fact, if we wanted to estimate $\Theta$, we could leverage Bayes' law as follows:
+\begin{align}
+	\prob{\Theta}{X^T=x^t} &= \frac{\prob{X^T=x^t}{\Theta} \uP{\Theta}}{\uP{X^T=x^t}} \\
+		&\propto \prob{X^T=x^t}{\Theta} \uP{\Theta}  \quad \} \, \text{Bayesian estimation} \\
+		&\propto \prob{X^T=x^t}{\Theta} \quad \quad \quad \; \; \} \, \text{non-Bayesian estimation}
+	\label{bay_estimate}
+\end{align}
+
+\textit{Gradient-based} methods are commonly used to (locally) estimate $\Theta$ by maximising the probability. 
+
+
+\section{Expectation Maximisation}
+
+The EM (Expectation Maximisation) algorithm is conceptionally somewhat in between MLE and MCMC. 
+The basic idea is to treat the hidden states as missing data and estimate them based on an estimate of $\Theta$. Then, having \textit{complete data} at its disposal, it in turn estimates $\Theta$. 
+
+The algorithm thus alternates between two steps: 
+\begin{enumerate}
+	\item \textbf{Expectation:} \\
+		  Complete the data (i.e. hidden states) by using their \textit{expected values} given $\Theta$
+	\item \textbf{Maximisation:} \\
+		  Given complete data (i.e. also the estimated states), choose $\Theta$ as to maximise the likelihood 
+\end{enumerate} 
+
+Note that the second step is often easy to compute, as \textit{complete data} is available. The algorithm differs significantly from MCMC methods in that it 
+\begin{itemize}
+	\item makes point estimates of both hidden states and parameters
+	\item uses the expectation to for this estimate
+\end{itemize}
+
+As opposed to this, MCMC in the Bayesian context operate on \textit{distributions} of parameters. The target values in EM are hence distributions in MCMC and the expectation in EM is replaced by sampling from a posterior distribution in MCMC. 
+
+
+\section{Markov Chain Monte Carlo Methods}
+
+	\subsection{Metropolis-Hastings Sampler}
+	The Metropolis-Hastings Sampler (abbrev. MH) can be thought of as a \textit{stochastic gradient descent}. The MH sampler produces a Markov Chain of $\left(\Theta_1, \Theta_2, \dots \right)$. 
+	
+	A new estimate of $\Theta$ is obtained by modifying the current sample slightly (usually with a step sampled from a normal distribution), estimating the new probability using \ref{bay_estimate} and accepting the sample based on this new probability. 
+	
+	Let $\tip{\Theta} := \prob{\Theta}{X^T = x^T}$, further let $Q(\Theta, \tp)$ denote the probability that $\tp$ is the new candidate when $\Theta$ was before. 
+	Whether the new sample $\tp$ is accepted is then determined as follows:
+	\begin{enumerate}
+		\item Let 
+		\[
+			\alpha := min \Bigg\{ 1,  \frac{\tip{\tp}}{\tip{\Theta}} \, \frac{Q(\Theta, \tp)}{Q(\tp, \Theta)}			
+			\Bigg\}
+		\]
+		\item Draw $u ~ U[0, 1]$
+		\item If $\alpha \leq u$, accept $\tp$, otherwise reject it. 
+	\end{enumerate} 
+
+	Note that if $Q$ is symmetric, then $\alpha$ simplifies to 
+	\[
+			\alpha := min \Bigg\{ 1,  \frac{\tip{\tp}}{\tip{\Theta}}			
+		\Bigg\}
+	\]
+	
+	
