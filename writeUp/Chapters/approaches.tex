@@ -65,13 +65,14 @@ P(X_1 = x_1, X_3 = x_3, X_T = x_t) = \delta \,  P(x_1) \, \tpm^{(3-1)} \,  P(x_3
 
 \section{Maximum Likelihood Estimation}
 
-As we have developed a way to compute $\prob{X^T=x^t}{\Theta}$, we can use appropriate method to maximise this expression. In fact, if we wanted to estimate $\Theta$, we could leverage Bayes' law as follows:
+As we have developed a way to compute $\prob{X^T=x^t}{\Theta}$, we can use an appropriate method to maximise this expression. In fact, if we wanted to estimate $\Theta$, we could leverage Bayes' law as follows:
 \begin{align}
-	\prob{\Theta}{X^T=x^t} &= \frac{\prob{X^T=x^t}{\Theta} \uP{\Theta}}{\uP{X^T=x^t}} \\
+	\underbrace{\prob{\Theta}{X^T=x^t}}_{\text{posterior distribution}} &= \frac{\prob{X^T=x^t}{\Theta} \uP{\Theta}}{\uP{X^T=x^t}} \\
 		&\propto \prob{X^T=x^t}{\Theta} \uP{\Theta}  \quad \} \, \text{Bayesian estimation} \\
 		&\propto \prob{X^T=x^t}{\Theta} \quad \quad \quad \; \; \} \, \text{non-Bayesian estimation}
 	\label{bay_estimate}
 \end{align}
+$\uP{\Theta}$ is also referred to as the \textit{prior distribution}.
 
 \textit{Gradient-based} methods are commonly used to (locally) estimate $\Theta$ by maximising the probability. 
 
@@ -92,7 +93,7 @@ The algorithm thus alternates between two steps:
 Note that the second step is often easy to compute, as \textit{complete data} is available. The algorithm differs significantly from MCMC methods in that it 
 \begin{itemize}
 	\item makes point estimates of both hidden states and parameters
-	\item uses the expectation to for this estimate
+	\item uses the expectation for this estimate
 \end{itemize}
 
 As opposed to this, MCMC in the Bayesian context operate on \textit{distributions} of parameters. The target values in EM are hence distributions in MCMC and the expectation in EM is replaced by sampling from a posterior distribution in MCMC. 
@@ -100,24 +101,50 @@ As opposed to this, MCMC in the Bayesian context operate on \textit{distribution
 
 \section{Markov Chain Monte Carlo Methods}
 
+	In a Bayesian understanding, model parameters are not just values, but are thought of as distributions themselves.
+	
+	Unfortunately, the complexity of the problems at hand does often not allow for an analytical solution to the parameters' posterior distribution. 
+	Still, we would like to gain an understanding of the distributions' shape. Aside from the general shape of the posterior distributions, point estimates like mean, variance, Kurtosis etc. are also of interest. 
+	
+	A canonical solution to this problem is to sample $\Theta_1, \Theta_2, \dots$ independently from the posterior distribution. By the central limit theorem (CLT) and the delta method, we can then approximate all quantities of interest to arbitrary accuracy as the length of the sample approaches infinity. 
+	
+	In reality, the algorithms we use for sampling (except for Rejection-Sampling) generally do not produce mutually independent samples; hence $\left(\Theta_1, \Theta_2, \dots \right)$ is also referred to as a \textit{chain}. Among others, the level of (in)dependence of the samples is a quality measure of the chain itself. For details on how we ascertain the sampler's quality, please refer to the respective chapter of measures.   
+	
+	
+	As aforementioned, the EM algorithm operates on maxima and hence can be thought of a specific case of the Bayesian interpretation - namely, operating only on the point estimates instead of the distributions themselves. These point estimates are often computed by analytically maximising likelihood; hence no sampling is required. On the other hand, as point estimates, they provide less information than the posterior distributions one obtains in a Bayesian framework. 
+	
+	
+
 	\subsection{Metropolis-Hastings Sampler}
-	The Metropolis-Hastings Sampler (abbrev. MH) can be thought of as a \textit{stochastic gradient descent}. The MH sampler produces a Markov Chain of $\left(\Theta_1, \Theta_2, \dots \right)$. 
+	The Metropolis-Hastings Sampler (abbrev. MH) can be thought of as a \textit{stochastic gradient descent}. 
+	
+	Starting from a given initial value $\Theta_1$,  MH sampler produces a Markov Chain of $\left(\Theta_1, \Theta_2, \dots \right)$ by repeatedly choosing a new theta in the direct vicinity of the previous one. 
 	
 	A new estimate of $\Theta$ is obtained by modifying the current sample slightly (usually with a step sampled from a normal distribution), estimating the new probability using \ref{bay_estimate} and accepting the sample based on this new probability. 
 	
-	Let $\tip{\Theta} := \prob{\Theta}{X^T = x^T}$, further let $Q(\Theta, \tp)$ denote the probability that $\tp$ is the new candidate when $\Theta$ was before. 
-	Whether the new sample $\tp$ is accepted is then determined as follows:
+	Hence, a Metropolis Hastings Sampler can be defined by providing
+	\begin{itemize}
+		\item $\tip{\Theta} := \prob{\Theta}{X^T = x^T}$\\
+			  The posterior probability of the new sample 
+		\item $Q(\Theta, \tp)$ \\
+			  The probability of considering $\tp$ as the new candidate when $\Theta$ is the current candidate. \\
+			  That is, the new candidate is sampled from $Q(\Theta, \cdot)$. 
+	\end{itemize}
+	
+	After drawing a new sample $\tp$ starting from $\Theta$, $\tp$ is accepted depending on the following:
 	\begin{enumerate}
 		\item Let 
 		\[
 			\alpha := min \Bigg\{ 1,  \frac{\tip{\tp}}{\tip{\Theta}} \, \frac{Q(\Theta, \tp)}{Q(\tp, \Theta)}			
 			\Bigg\}
 		\]
-		\item Draw $u ~ U[0, 1]$
-		\item If $\alpha \leq u$, accept $\tp$, otherwise reject it. 
+		\item Draw $u \sim U[0, 1]$
+		\item If $\alpha \leq u$, accept $\tp$ (i.e. set $\Theta_{t+1} = \tp$), otherwise reject it (i.e. $\Theta_{t+1} = \Theta_t$). 
 	\end{enumerate} 
+	If the probability of acceptance is low, then the chain often rests at the same position and hence exhibits a high autocorrelation - the chain is then also called ''sticky''. This is obviously detrimental for statistical independence and hence reduces the information inherent to the generated chain. 
+	The measure of \textit{effective sample size} tries to capture the loss of information due to this effect and shall be elaborated upon later on.
 
-	Note that if $Q$ is symmetric, then $\alpha$ simplifies to 
+	We will be using a symmetric $Q$ for this thesis; note that in this case,  $\alpha$ simplifies to 
 	\[
 			\alpha := min \Bigg\{ 1,  \frac{\tip{\tp}}{\tip{\Theta}}			
 		\Bigg\}
