@@ -1,7 +1,9 @@
 
 source('lib/MC/common/utiltiy.R')
 
-
+# samples gamma by altering with sample drawn from normal distribution
+# first draws _one_ row to alter; then alters _solely_ this row
+# always returns valid distributions
 sampleGamma <- function(gamma){
   dims <- dim(gamma)
   n <- dims[1]

@@ -3,19 +3,23 @@ source('lib/estimProb.R')
 source('lib/estimProbWithStates.R')
 
 # implementation of a direct-Gibbs (DG) sampler for the state-space
+# DG as presented in 
+# "Bayesian Methods for Hidden Markov Models: Recursive Computing
+# in the 21st Century", Steven L. Scott, 2002
 
 directGibbsSampler <- function(delta, gamma, P_dens, obs){
   m <- length(delta)
   n <- length(obs$obs)
   origStates <- obs$states
   states <- getInitialStateEstimate(P_dens, obs);
-  
-  stateHistory <- matrix(data=states, ncol = length(states))
-  
   gamma <- drawRandomGamma(m);
-  runs <- 2000
+  
+  # track progress
+  stateHistory <- matrix(data=states, ncol = length(states))
   distances <- c()
   probs <- c()
+  
+  runs <- 50
   for(n in 1:runs){
     states <- sampleStates(delta, gamma, P_dens, obs, states)
     gamma <- gammaMHStep(delta, gamma, P_dens, obs, states)
@@ -24,6 +28,7 @@ directGibbsSampler <- function(delta, gamma, P_dens, obs){
     stateHistory <- rbind(stateHistory, states)
     print(prob)
     
+    # use expectation of sampling history to estimate state at each time step
     estimatedStates <- apply(stateHistory, 2, mean)
     dist <- sum((estimatedStates - origStates)^2)
     print(dist)
@@ -33,6 +38,8 @@ directGibbsSampler <- function(delta, gamma, P_dens, obs){
        "stateHistory" = stateHistory, "estimGamma" = gamma)
 }
 
+# for each timestep, assumes the state assumed the most often to be the 
+# correct state. Uses this strategy to return full chain of states
 extractMaxFromHistory <- function(stateHistory, noStates){
   dims <- dim(stateHistory)
   n    <- dims[2]
@@ -47,18 +54,13 @@ extractMaxFromHistory <- function(stateHistory, noStates){
   states
 }
 
-# samples states from end to beginning, one run
+# samples states from end to beginning;
+# samples each state from P(C_t | C_{t-1}, C_{t+1})
+# this sampler might be very sticky :)
 sampleStates <- function(delta, gamma, P_dens, obs, states){
   n <- length(obs$obs)
   m <- length(delta)
   for(t in n:1){
-    # alpha <- estimAlpha(delta, gamma, P_dens, obs, t)
-    # beta <- estimBeta(delta, gamma, P_dens, obs, t)
-    # 
-    # combined <- alpha * t(beta)
-    # #maxProbState <- which.max(combined)
-    # maxProbState <- rdiscrete(1, combined)
-    # states[t] <- maxProbState
     
     stateProbs <- c()
     for(s in 1:m){
@@ -71,8 +73,6 @@ sampleStates <- function(delta, gamma, P_dens, obs, states){
       
       stateProbs <- c(stateProbs, stateProb)
     }
-    
-    #states[t] <- which.max(stateProbs)
     states[t] <- rdiscrete(1, stateProbs)
   }
   states
@@ -85,13 +85,13 @@ getInitialStateEstimate <- function(P_dens, obs){
   states <- c()
   for(t in 1:length(obs$obs)){
     probs <- sapply(P_dens, function(f){ f(obs$obs[t])})
-    #states <- c(states, which.max(probs))
-    states <- c(states, rdiscrete(1, c(0.5, 0.5)))
+    states <- c(states, rdiscrete(1, probs)
   }
   states
 }
 
-
+# alters gamma with Metropolis-Hastings step drawn from normal distribution
+# returns new chain element (whether it be old sample or newly accepted sample)
 gammaMHStep <- function(delta, gamma, P_dens, obs, states){
   dims <- dim(gamma)
   n <- dims[1]

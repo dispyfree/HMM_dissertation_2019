@@ -8,6 +8,10 @@ library(testit)
 #gtools overwrites assert... what a bad practice. 
 assert <- testit::assert
 
+# samples states by drawing last state randomly using alpha_T
+# then samples backwards by using 
+# P(X^t = x^t, C_t) * P(C_{t+1} | C_t) = \alpha_t(i) * \gamma{i, C_{t+1}}
+# method adopted from Zucchini
 sampleHiddenStates <- function(theta, P_dens, obs){
   probs <- estimTLogProb(theta, P_dens, obs)
   alphas <- probs$alphas
@@ -42,7 +46,8 @@ sampleHiddenStates <- function(theta, P_dens, obs){
   states
 }
 
-
+# accepts vector of log(a), log(b), log(c), ... 
+# returns a, 1-a 
 logProbToRatio <- function(dist){
   rat <- exp(dist[2] - dist[1])
   p1Prob <- 1.0 / (1.0 + rat)
@@ -50,13 +55,16 @@ logProbToRatio <- function(dist){
 }
 
 
-
-#nextState is C_{t+1}
+# returns: 
+# P(X^t = x^t, C_t) * P(C_{t+1} | C_t) = \alpha_t(i) * \gamma{i, C_{t+1}}
+# nextState is hence C_{t+1}
 getBackwardProbs <- function(alpha, gamma, nextState){
   alpha + log(gamma[, nextState])
 }
 
 
+# estimates Gamma using the given estimate of hidden states
+# then updates it by means of weighted Dirichlet distribution
 sampleGamma <- function(m, hiddenStates, prior){
   eGamma <- estimGamma(m, hiddenStates)
   sample <- replicate(m, prior)
@@ -65,15 +73,15 @@ sampleGamma <- function(m, hiddenStates, prior){
   gamma <- matrix(rep.int(0, m*m), nrow = m)
   w <- 0.8
   for(i  in 1:m){
+    # TODO: argue why this works better
     gamma[i, ] <- w * eGamma[i, ] + 
-                 (1-w) *  rdirichlet(1, sample[i,] + 10 * eGamma[i, ])
+           (1-w) *  rdirichlet(1, sample[i,] + 10 * eGamma[i, ])
   }
   gamma 
 }
 
-weightedMean <- 
 
-
+# estimates gamma naiively by given chain of hiddenStates
 estimGamma <- function(m, hiddenStates){
   trans <- matrix(rep.int(0, m*m), nrow = m)
   
@@ -97,6 +105,8 @@ estimGamma <- function(m, hiddenStates){
   trans
 }
 
+
+# simple estimates Bernoulli with the average of observations for each state
 sampleBernoulli <- function(m, hiddenStates, obs){
   probs <- rep(0.0, m)
   # the initial distribution doesn't have an attached observation
@@ -114,7 +124,7 @@ sampleBernoulli <- function(m, hiddenStates, obs){
   probs
 }
 
-
+# samples gamma, bernoulli and delta in one go
 sampleTheta  <- function (m, hiddenStates, obs, oldDelta, noPriorRuns){
   # uniform over all distributions
   alphaPrior <- rep.int(1, m)

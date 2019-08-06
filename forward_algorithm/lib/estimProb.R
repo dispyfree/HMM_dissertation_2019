@@ -1,7 +1,7 @@
 library(testit)
 library(lambda.tools)
 
-# naiive implementation for discrete timetime-homogeneous HMM
+# naiive implementation for discrete-time, discrete-space time-homogeneous HMM
 # notation:
 # delta: row vector of initial probabilities; should equal stationary distribution
 # gamma: matrix of transition probabilities: \gamma_{ij} : prob . of transition 
@@ -9,13 +9,15 @@ library(lambda.tools)
 # P: row vector of functions; each function is the pdf or pmf of a state's 
 # associated distribution
 # observations: data frame consisting of obs (observations) and time (absolute times)
+# note: the time of the first observation must be zero if it occurs at the initial distribution
+# This is irrelevant if the initial distribution is the stationary distribution. 
 estimProb <- function(delta, gamma, P, obs){
   alpha_t <- estimAlpha(delta, gamma, P, obs,length(obs$obs))
   likelihood <- alpha_t %*% t(t(rep.int(1, length(delta))))
   likelihood
 }
 
-#shorthand, gets passed in theta
+#shorthand for estimProb, gets passed in theta
 estimTProb <- function(theta, P_dens, obs){
   estimProb(theta$delta, theta$gamma, P_dens, obs)
 }
@@ -39,6 +41,8 @@ estimAlpha <- function(delta, gamma, P, obs, finalT){
   alpha_t
 }
 
+
+# calculates beta_{startT}
 # beta as defined in Zucchini
 estimBeta <- function(delta, gamma, P, obs, startT){
   dims <- dim(obs)
@@ -70,6 +74,7 @@ checkConsistency <- function(delta){
 }
 
 
+# computes the power of of matrix mat. p=0 yields the identity matrix
 matPow <- function(mat, p){
   assert(p >= 0)
   if(p == 0){

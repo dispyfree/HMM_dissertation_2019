@@ -1,6 +1,8 @@
 library(purrr)
 library(testit)
 
+# samples by altering delta with normal distribution
+# always returns a valid distribution
 sampleInitialDist <- function(delta){
   sd <- 0.05
   n <- length(delta)
@@ -40,12 +42,14 @@ normaliseToZeroSum <- function(vec){
 }
 
 
-
+# all entries are (1/m)
 drawRandomGamma <- function(m){
   gamma <- matrix(rep.int(1/m, m*m), ncol=m)
   gamma
 }
 
+# samples by altering probs with normal distribution
+# always returns a valid distribution
 sampleBernoulliP <- function(probs){
   sd <- 0.05
   assert(all(probs >= 0 & probs <= 1))
@@ -59,7 +63,7 @@ sampleBernoulliP <- function(probs){
 
 
 
-# vector of probabilities for Bernoulli dists
+# maps vector of probabilities to vector of Bernoulli pdfs
 buildBernDensity <- function(ps){
   assert(all(ps >= 0 & ps <= 1))
   
@@ -70,6 +74,7 @@ buildBernDensity <- function(ps){
   P_density
 }
 
+# attaches theta to progress and returns new progress
 thetaToProgress <- function(progress, theta){
   progress <- rbind(progress, c(
     theta$delta[1:2],

@@ -1,6 +1,7 @@
 library('readr')
 source('lib/MC/directGibbsSampler.R')
 source('lib/models/rainModel.R')
+source('lib/MC/common/utility.R')
 # source('../common/genMC.R')
 # 
 #dat <- genMC(u = u1, gamma = gamma1, P = P,P_density = P_density, T= 500)

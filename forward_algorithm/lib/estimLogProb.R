@@ -1,10 +1,8 @@
 library(testit)
 library(purrr)
 
-#todo: handle probability of zero explicitly! (if density is exactly zero for certain)
-# values, this implementation breaks!
 
-# log-space implementation for discrete timetime-homogeneous HMM
+# log-space implementation for discretetime, discrete-space, time-homogeneous HMM
 # notation:
 # delta: row vector of initial probabilities; should equal stationary distribution
 # gamma: matrix of transition probabilities: \gamma_{ij} : prob . of transition 
@@ -12,8 +10,8 @@ library(purrr)
 # P: row vector of functions; each function is the pdf or pmf of a state's 
 # associated distribution
 # observations: data frame consisting of obs (observations) and time (absolute times)
-
-# this algorithm runs in O(m^T); beware! 
+# note: the time of the first observation must be zero if it occurs at the initial distribution
+# This is irrelevant if the initial distribution is the stationary distribution. 
 estimLogProb <- function(delta, gamma, P, obs){
   dims <- dim(obs)
   n <- dims[1]
@@ -47,8 +45,7 @@ estimLogProb <- function(delta, gamma, P, obs){
   }
   
   for (t in 1:n){
-      probs <- sapply(P,
-                      function(f){ f(obs$obs[t])})
+      probs <- sapply(P,function(f){ f(obs$obs[t])})
       P_v <- diag(probs)
       beta <- matPow(gamma, obs$time[t]) %*% P_v
       
@@ -80,6 +77,7 @@ estimLogProb <- function(delta, gamma, P, obs){
   list('logSum' = logSum(selectIfFinite(alpha_t)), "alphas" = alphas)
 }
 
+#shorthand for estimLogProb, takes theta
 estimTLogProb <- function(theta, P_dens, obs){
   estimLogProb(theta$delta, theta$gamma, P_dens, obs)
 }
@@ -92,17 +90,6 @@ addIfNotInfty <- function(no1, no2){
     no2
   else
     no1 + no2
-}
-
-# returns zero iff no is infinity/-infinity
-# used to discard log(0) values by not adding them up
-zeroIfInfty <- function(no){
-  if(is.finite(no)){
-    no
-  }
-  else{
-    0
-  }
 }
 
 selectIfFinite <- function(x){

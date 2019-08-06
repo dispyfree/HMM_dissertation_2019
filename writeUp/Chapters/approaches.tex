@@ -36,7 +36,7 @@ Note that there are $\bigO{m}$ calculations for each time step and entry of $\al
  
 Also by the law of total probability, we have
 \[
-\sum_j \alpha_t(j) = P\left(X_1 = x_1, X_2 = x_2, \dots, X_T = x_t \right)
+\sum_j \alpha_T(j) = P\left(X_1 = x_1, X_2 = x_2, \dots, X_T = x_t \right)
 \] 
 i.e. the probability (or density) of this string of observations occuring. 
 
@@ -53,13 +53,21 @@ Let
 		0        & \dots    & \dots & p_m(x_i)
 	\end{pmatrix}
 \end{align*}
-where $x_i$ is a realisation and $p_1, \dots, p_m$ are the states' probability functions in case the distributions are discrete or probability density functions otherwise. 
+where $x_i$ is a realisation and $p_1, \dots, p_m$ are the states' probability functions in case the distributions are discrete or probability density functions otherwise, i.e.
+\[
+	p_i(x_t) := \prob{X_t = x_t}{C_t = i}
+\]
 
+Then we have:
+\[
+\alpha_t = \delta \, P(x_1) \, \tpm \, P(x_2) \, \dots \tpm P(x_t)
+\]
 
 Note that if the observations are not consecutive, the powers of $\tpm$ need to be adjusted accordingly:
 \[
-P(X_1 = x_1, X_3 = x_3, X_T = x_t) = \delta \,  P(x_1) \, \tpm^{(3-1)} \,  P(x_3) \,  \tpm^{(T-3)} \, P(x_t)
+P(X_1 = x_1, X_3 = x_3, X_T = x_t) = \delta \,  P(x_1) \, \tpm^{(3-1)} \,  P(x_3) \,  \tpm^{(T-3)} \, P(x_t) \, 1^\prime
 \]
+where $1^\prime$ is a vertical vector with components all $1$. 
 
 
 
@@ -68,19 +76,19 @@ P(X_1 = x_1, X_3 = x_3, X_T = x_t) = \delta \,  P(x_1) \, \tpm^{(3-1)} \,  P(x_3
 As we have developed a way to compute $\prob{X^T=x^t}{\Theta}$, we can use an appropriate method to maximise this expression. In fact, if we wanted to estimate $\Theta$, we could leverage Bayes' law as follows:
 \begin{align}
 	\underbrace{\prob{\Theta}{X^T=x^t}}_{\text{posterior distribution}} &= \frac{\prob{X^T=x^t}{\Theta} \uP{\Theta}}{\uP{X^T=x^t}} \\
-		&\propto \prob{X^T=x^t}{\Theta} \uP{\Theta}  \quad \} \, \text{Bayesian estimation} \\
-		&\propto \prob{X^T=x^t}{\Theta} \quad \quad \quad \; \; \} \, \text{non-Bayesian estimation}
+		&\propto \prob{X^T=x^t}{\Theta} \uP{\Theta}  \quad \} \, \text{Bayesian estimation} 
 	\label{bay_estimate}
 \end{align}
 $\uP{\Theta}$ is also referred to as the \textit{prior distribution}.
 
-\textit{Gradient-based} methods are commonly used to (locally) estimate $\Theta$ by maximising the probability. 
+TODO: distinguish MLE from Bayes further
+
+\textit{Gradient-based} methods are commonly used to (locally) estimate $\Theta$ by choosing it as to maximise the probability of the data. 
 
 
 \section{Expectation Maximisation}
-
-The EM (Expectation Maximisation) algorithm is conceptionally somewhat in between MLE and MCMC. 
-The basic idea is to treat the hidden states as missing data and estimate them based on an estimate of $\Theta$. Then, having \textit{complete data} at its disposal, it in turn estimates $\Theta$. 
+ 
+The basic idea of EM (Expectation Maximisation) is to treat the hidden states as missing data and estimate them based on an estimate of $\Theta$. Then, having \textit{complete data} at its disposal, it in turn estimates $\Theta$. 
 
 The algorithm thus alternates between two steps: 
 \begin{enumerate}
@@ -135,11 +143,11 @@ As opposed to this, MCMC in the Bayesian context operate on \textit{distribution
 	\begin{enumerate}
 		\item Let 
 		\[
-			\alpha := min \Bigg\{ 1,  \frac{\tip{\tp}}{\tip{\Theta}} \, \frac{Q(\Theta, \tp)}{Q(\tp, \Theta)}			
+			\alpha := min \Bigg\{ 1,  \frac{\tip{\tp}}{\tip{\Theta}} \, \frac{Q(\tp, \Theta)}{Q(\Theta, \tp)}			
 			\Bigg\}
 		\]
 		\item Draw $u \sim U[0, 1]$
-		\item If $\alpha \leq u$, accept $\tp$ (i.e. set $\Theta_{t+1} = \tp$), otherwise reject it (i.e. $\Theta_{t+1} = \Theta_t$). 
+		\item If $u \leq \alpha$, accept $\tp$ (i.e. set $\Theta_{t+1} = \tp$), otherwise reject it (i.e. $\Theta_{t+1} = \Theta_t$). 
 	\end{enumerate} 
 	If the probability of acceptance is low, then the chain often rests at the same position and hence exhibits a high autocorrelation - the chain is then also called ''sticky''. This is obviously detrimental for statistical independence and hence reduces the information inherent to the generated chain. 
 	The measure of \textit{effective sample size} tries to capture the loss of information due to this effect and shall be elaborated upon later on.
