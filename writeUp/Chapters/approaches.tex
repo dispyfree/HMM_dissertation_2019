@@ -142,10 +142,11 @@ As opposed to this, MCMC in the Bayesian context operate on \textit{distribution
 	After drawing a new sample $\tp$ starting from $\Theta$, $\tp$ is accepted depending on the following:
 	\begin{enumerate}
 		\item Let 
-		\[
+		\begin{align}
 			\alpha := min \Bigg\{ 1,  \frac{\tip{\tp}}{\tip{\Theta}} \, \frac{Q(\tp, \Theta)}{Q(\Theta, \tp)}			
 			\Bigg\}
-		\]
+			\label{alphaSamplingStep}
+		\end{align}
 		\item Draw $u \sim U[0, 1]$
 		\item If $u \leq \alpha$, accept $\tp$ (i.e. set $\Theta_{t+1} = \tp$), otherwise reject it (i.e. $\Theta_{t+1} = \Theta_t$). 
 	\end{enumerate} 
@@ -157,5 +158,70 @@ As opposed to this, MCMC in the Bayesian context operate on \textit{distribution
 			\alpha := min \Bigg\{ 1,  \frac{\tip{\tp}}{\tip{\Theta}}			
 		\Bigg\}
 	\]
+	
+	
+	Note that convergence of the chain produced by this sampler is by no means obvious; \cite{mcnotes} may be consulted for details. 
+	
+	
+	
+	\subsection{Gibb's Sampler}
+	The Gibb's sampler samples by repeatedly sampling one component while fixing all other components. When fixing all other components, a the \textit{joint distribution} becomes a \textit{marginal distribution}, which is often much easier to sample from. In other words:
+	
+	To illustrate the Gibb's sampler, let $Y$ be an m-dimensional vector parameterising a given model completely. Let $Y_{-i}$ denote all the parameters \textit{except for} the ith parameter.
+	We again consider a chain $Y^{(1)}, Y^{(2)}, \dots$ of parameters; $Y_i^{(t)}$ then denotes the ith component of the parameterisation at time step $t$. 
+	
+	The Gibb's sampler works as follows in each step:
+	\begin{itemize}
+		\item Draw index $i \in \{1, \dots, m\}$ uniformy
+		\item Draw $\tilde{Y}^{(t+1)}_i \sim \prob{Y^{(t)}_i}{Y^{(t)}_{-i}}$
+		\item let $Y^{(t+1)} := \left(
+				Y^{(t)}_1, Y^{(t)}_2, \dots, Y^{(t)}_{i-1}, 
+				\tilde{Y}^{(t+1)}_i, 
+				Y^{(t)}_{i+1}, \dots, Y^{(t)}_m
+			\right)$
+	\end{itemize}
+	
+	The variant presented herein is called the \textit{Random Scan Gibb's Sampling} because of the uniform choice of $i$. When $i$ is chosen successively (for instance to ensure that all parameters are regularly updated), this is referred to as the \textit{Systematic Scan Gibb's Sampler}.
+	
+	The Gibb's sampler is in fact a special case of the Metropolis-Hastings sampler. Note that 
+	\[
+		Q(Y^{(t)}, Y^{(t+1)}) = \frac{1}{m} \, \prob{Y^{(t+1)}_i}{Y^{(t)}_{-i}}
+	\]
+	where $i$ is the altered component. Then, in equation $\ref{alphaSamplingStep}$, we have:
+	\begin{align*}
+		\frac{P(  Y^{(t+1)}_i  )}{P( Y^{(t)}_i  )} \, 
+		\frac{ Q( Y^{(t+1)}, Y^{(t)})}{
+			Q( Y^{(t)}, Y^{(t+1)})} &=
+			\frac{\uP{Y^{(t+1)}}}{ \uP{ Y^{(t)}  }}
+			\frac{
+				 \gibbsC{t}{i}{t+1}{-i}	
+				}{
+				\gibbsC{t+1}{i}{t}{-i}	
+		} \\
+	 &= 
+	 \frac{
+	 	 \gibbsC{t+1}{i}{t}{-i}
+		  }{
+		 \gibbsC{t}{i}{t}{-i}
+ 	 }
+  		\,
+  	\frac{
+  		\uP{Y^{(t)}_{-i}}
+  	}{
+  		\uP{Y^{(t)}_{-i}}
+	}\,
+	 \frac{
+	 	\gibbsC{t}{i}{t+1}{-i}	
+	 }{
+	 \gibbsC{t+1}{i}{t}{-i}		
+	 } \\
+    &= 1
+	\end{align*}
+	
+	Hence we have $\alpha = min \{1, 1\} = 1$ and all samples drawn are accepted. 
+		
+	
+	
+	
 	
 	
