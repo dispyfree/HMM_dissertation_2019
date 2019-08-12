@@ -18,7 +18,7 @@ Suppose that we are able to compute the quantity
 For $t=0$ this is obvious, as we have $\alpha_0 = \delta$\footnote{(there are no observations available)}. 
 
 Then we able to compute $\alpha_{t+1}(i)$ as follows:
-\begin{align*}
+\begin{align}
 	\alpha_{t+1}(i) 
 	&=  P\left(X^{(t+1)} = x^{(t+1)},  C_{t+1} = i\right) \\
 	 &=  \sum_{k=1}^m P\left(X^{(t+1)} = x^{(t+1)}, C_{t+1} = i, C_t = k\right) \\ 
@@ -30,7 +30,8 @@ Then we able to compute $\alpha_{t+1}(i)$ as follows:
  	&= \sum_{k=1}^m \prob{
  		X^{(t)} = x^{(t)}}{C_t = k} \prob{ C_{t+1} = i}{C_t = k} P\left( C_t = k\right) p_i(x_{t+1})\\
  	&=  \sum_{k=1}^m \alpha_t(k)  \, \tpm_{k, i} \, p_i(x_{t+1}) \\
-\end{align*}
+ 	\label{llrecursion}
+\end{align}
 
 Note that there are $\bigO{m}$ calculations for each time step and entry of $\alpha_t$, hence $\bigO{m^2}$ calculations for each $\alpha_t$ and $\bigO{T m^2}$ calculations for processing of the entire chain. Hence, this approach is also suitable for very long chains.
  

@@ -1,6 +1,6 @@
 library(ggplot2)
 
-source('lib/simpleSwitchingModel.R')
+source('lib/models/simpleSwitchingModel.R')
 source('lib/estimProb.R')
 source('lib/estimLogProb.R')
 #trialsNos <- seq(15, 25, 1)
@@ -18,9 +18,9 @@ for(b in trialsNos){
   p1 <- estimProb(delta1, gamma1, P1_density, obs1)
   p2 <- estimLogProb(delta1, gamma1, P1_density, obs1)
   print(p1)
-  print(p2)
+  print(p2$logSum)
   probs1 <- c(probs1, log(p1))
-  probs2 <- c(probs2, p2)
+  probs2 <- c(probs2, p2$logSum)
 }
 
 results <- data.frame(naiiveProbs <- probs1, logProbs <- probs2,
@@ -33,4 +33,5 @@ ggplot() +
   geom_point(data=results, aes(x=noObs, y=logProbs, color='blue' )) +
   labs(x = '# of observations', y = 'log-probability')+
   ggtitle('log-probability naiive algorithm switcher model') + 
-  scale_color_discrete(name = "log-probs", labels = c("log-based", "naiive"))
+  scale_color_discrete(name = "log-probs", labels = c("log-based", "naiive")) +
+  scale_y_continuous(breaks = scales::pretty_breaks(n = 10))
