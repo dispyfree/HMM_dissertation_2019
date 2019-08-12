@@ -4,6 +4,7 @@ library(e1071)
 library(purrr)
 library(gtools)
 library(testit)
+library(ggplot2)
 
 #gtools overwrites assert... what a bad practice. 
 assert <- testit::assert
@@ -40,8 +41,8 @@ sampleHiddenStates <- function(theta, P_dens, obs){
     lastState <- newState
   }
   
-  print(sum(states == 1) / length(states))
-  print("----------------------------")
+  #print(sum(states == 1) / length(states))
+  #print("----------------------------")
   
   states
 }
@@ -73,9 +74,9 @@ sampleGamma <- function(m, hiddenStates, prior){
   gamma <- matrix(rep.int(0, m*m), nrow = m)
   w <- 0.8
   for(i  in 1:m){
-    # TODO: argue why this works better
-    gamma[i, ] <- w * eGamma[i, ] + 
-           (1-w) *  rdirichlet(1, sample[i,] + 10 * eGamma[i, ])
+    print(sample[i, ])
+    print(eGamma[i, ])
+    gamma[i, ] <- rdirichlet(1, 10 * (sample[i, ] +  eGamma[i, ]))
   }
   gamma 
 }
@@ -98,7 +99,7 @@ estimGamma <- function(m, hiddenStates){
       trans[i, ] <- rep.int(1.0/m, m)
     }
     else{
-      trans[i, ] <- trans[i, ] / sum(trans[i, ])
+      trans[i, ] <- trans[i, ] #/ sum(trans[i, ])
     }
   }
   
@@ -127,7 +128,7 @@ sampleBernoulli <- function(m, hiddenStates, obs){
 # samples gamma, bernoulli and delta in one go
 sampleTheta  <- function (m, hiddenStates, obs, oldDelta, noPriorRuns){
   # uniform over all distributions
-  alphaPrior <- rep.int(1, m)
+  alphaPrior <- rep.int(1.0 / m, m)
   
   oldDelta <- oldDelta * noPriorRuns
   oldDelta[hiddenStates[1]] <- oldDelta[hiddenStates[1]] + 1

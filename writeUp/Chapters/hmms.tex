@@ -51,3 +51,16 @@ The dependencies can easily be visualised in the following way:
 \end{figure}
 Here, each circle represents a random variable and each arrow a conditional dependency. In particular, each variable is conditionally independent of all other variables, if it is conditioned on the variable it is connected to in this graph. 
 
+
+\section{Stationarity}
+This section explains an effect of Markov Chains known as \textit{stationarity}. In particular, under a set of rather weak constraints, there exists a unique, discrete probability distribution $\pi \in \R_+^m$ named the \textit{stationary distribution}, with the following properties:
+\begin{align*}
+	\pi \Gamma &= \pi \\
+	P(C_t = i) &\overset{t \rightarrow \infty}{\longrightarrow} \pi_i \forall 1 \leq i \leq m \\
+\end{align*}
+
+The former condition states that when $P(C_t) \sim \pi \implies P(C_{t+1}) \sim \pi$ with $\prob{C_{t+1 = j}}{C_t = i} = \Gamma_{i, j}$ as usual. Hence, $\pi$ is \textit{invariant} under $\Gamma$ - when the chain at a point where the states are assumed with a probability given by the stationary distribution, the said probability does not change with a step in time. 
+
+The latter property states that the chain converges towards its stationary distribution as $t \rightarrow \infty$. 
+
+For details on the conditions and a proof, please refer to Breuer\cite{intro_processes}.

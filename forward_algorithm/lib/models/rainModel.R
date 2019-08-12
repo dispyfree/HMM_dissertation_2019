@@ -27,3 +27,5 @@ function(x){
   ddiscrete(x, c(0.3, 0.7), values = c(1, 0))
 }
 )
+
+estimatedHiddenStateDist <- u1[1] * 0.1 + u1[2] * 0.3 

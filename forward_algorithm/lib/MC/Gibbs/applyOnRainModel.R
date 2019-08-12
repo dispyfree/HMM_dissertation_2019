@@ -1,6 +1,9 @@
 library('readr')
 source('lib/MC/Gibbs/Gibbs.R')
-
+library(ggplot2)
+library(grid)
+library(ggExtra)
+library(gridExtra)
 
 # contains the parameterisation of the entire model (hence \theta)
 # m is the number of states
@@ -31,7 +34,7 @@ GibbsSampler <- function(m, obs){
   # initialize uniformly 
   theta <- getInitialTheta(m)
   
-  runs <- 50
+  runs <- 150
   progress <- data.frame(delta1 = c(0), delta2 = c(0), 
                          gamma11 = c(0), gamma12 = c(0), 
                          gamma21 = c(0), gamma22 = c(0),
@@ -72,6 +75,42 @@ indices <- 1:length(ret$progress$p1)
 plot(indices, ret$progress$p1, col='red', type='l')
 lines(indices, ret$progress$p2, col='blue', type='l')
 
+dat <- data.frame(p1 = ret$progress$p1, p2 = ret$progress$p2, time = indices)
 
+hist_right <- ggplot()+
+  geom_density(aes(c(dat$p1, dat$p2)), show.legend=NA, n=64, adjust = 0.25)+
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank()) +
+  ggtitle('freq') +
+  coord_flip()
+
+s = 150 / 3
+p <- ggplot(dat, aes(x=time)) + 
+  geom_line(aes(y = p1), color = "darkred") + 
+  geom_line(aes(y = p2), color="darkblue") +
+  scale_color_manual(values = c("darkred", "darkblue"))+
+  ggtitle('Course of Bernoulli paramters') +
+  ylab('p1, p2') +
+  geom_vline(xintercept = s, colour='blue', linetype="dotted")+
+  geom_vline(xintercept = 2 * s, colour='blue', linetype="dotted")+
+  annotate("text", x=15, y=0.05, label= "First Part", colour='blue') +
+  annotate("text", x= s + 25, y=0.05, label= "Second Part", colour='blue') +
+  annotate("text", x= 2 * s + 25, y=0.05, label= "Third Part", colour='blue') 
+p  
+#grid.arrange(p, hist_right, ncol=2, nrow=1, widths = c(5, 1))
+
+
+# show convergence of distance to real hidden states under L_1 norm
+ret$progress$time <- 1:length(ret$progress$p1)
+T <- length(rainySample$states)
+ggplot(data=ret$progress) +
+  geom_line(aes(x = time, y = dist), color = 'darkblue') +
+  geom_hline(yintercept = estimatedHiddenStateDist * T, color='red') + 
+  ylab('L1 distance') +
+  ggtitle('L1 distance to real hidden states')
+    
 
 
