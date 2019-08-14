@@ -10,6 +10,7 @@ To be precise, forward probabilities provide a \textit{dynamic programming} appr
 
 
 \subsection{Mathematical approach}
+\label{chap_math_approach}
 Suppose that we are able to compute the quantity 
 \[
 	\alpha_t(j) = P\left(X_1 = x_1, X_2 = x_2, \dots, X_t = x_t, C_t = j\right)
@@ -125,6 +126,7 @@ As opposed to this, MCMC in the Bayesian context operate on \textit{distribution
 	
 
 	\subsection{Metropolis-Hastings Sampler}
+	\label{chap_mh_sampler}
 	The Metropolis-Hastings Sampler (abbrev. MH) can be thought of as a \textit{stochastic gradient descent}. 
 	
 	Starting from a given initial value $\Theta_1$,  MH sampler produces a Markov Chain of $\left(\Theta_1, \Theta_2, \dots \right)$ by repeatedly choosing a new theta in the direct vicinity of the previous one. 

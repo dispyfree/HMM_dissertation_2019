@@ -19,20 +19,25 @@ sampleInitialDist <- function(delta){
 # resulting vector has sum 1 and has values in [0, 1]
 normaliseTo01Sum1 <- function(vec){
   l <- sum(abs(vec))
-  vec <- vec / l
+  # for numerical stability, make sure |*| < 1
+  vec <- vec / (l * 1.001)
   normaliseTo01(vec)
 }
 
 
 # resulting vector has values in [0, 1], obtained by shifting accordingly
 normaliseTo01 <- function(vec){
-  if(min(vec) < 0){
-    vec <- vec - min(vec)
-  }
-  else if(max(vec) > 1){
-    vec <- vec - (max(vec) - 1)
-  }
-  vec
+  ret <- sapply(vec, function(entry){
+    if(entry < 0){
+      -entry;
+    }
+    else if(entry > 1){
+      1.0 - (entry - 1.0)
+    }
+    else{
+      entry
+   }});
+  ret
 }
 
 # resulting vector is shifted s.t. its components sum to zero. 
@@ -51,12 +56,13 @@ drawRandomGamma <- function(m){
 # samples by altering probs with normal distribution
 # always returns a valid distribution
 sampleBernoulliP <- function(probs){
-  sd <- 0.05
+  sd <- 0.03
   assert(all(probs >= 0 & probs <= 1))
+  
   m <- length(probs)
   probs <- probs + rnorm(m, mean = 0, sd=sd)
   
-  probs <- normaliseTo01(probs)
+  probs <- sapply(probs, normaliseTo01)
   assert(all(probs >= 0 & probs <= 1))
   probs
 }
@@ -74,12 +80,37 @@ buildBernDensity <- function(ps){
   P_density
 }
 
+
+# maps vector of probabilities to vector of Bernoulli pdfs
+buildPoissonDensity <- function(lambdas){
+  assert(all(lambdas > 0))
+  
+  P_density <- map(lambdas, function(lambda){
+    function(x){
+      dpois(x, lambda)
+    }})
+  P_density
+}
+
 # attaches theta to progress and returns new progress
-thetaToProgress <- function(progress, theta){
+BernThetaToProgress <- function(progress, theta, accepted){
   progress <- rbind(progress, c(
     theta$delta[1:2],
     theta$gamma[1, 1:2], theta$gamma[2, 1:2],
-    theta$statePara[1:2]
+    theta$statePara[1:2],
+    accepted
+  ))
+  progress
+}
+
+
+# attaches theta to progress and returns new progress
+PoissonThetaToProgress <- function(progress, theta, accepted){
+  progress <- rbind(progress, c(
+    theta$delta[1:2],
+    theta$gamma[1, 1:2], theta$gamma[2, 1:2],
+    theta$statePara[1:3],
+    accepted
   ))
   progress
 }

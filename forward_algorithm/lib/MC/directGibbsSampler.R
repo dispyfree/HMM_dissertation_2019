@@ -85,7 +85,7 @@ getInitialStateEstimate <- function(P_dens, obs){
   states <- c()
   for(t in 1:length(obs$obs)){
     probs <- sapply(P_dens, function(f){ f(obs$obs[t])})
-    states <- c(states, rdiscrete(1, probs)
+    states <- c(states, rdiscrete(1, probs))
   }
   states
 }

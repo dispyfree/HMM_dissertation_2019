@@ -1,4 +1,5 @@
 library('readr')
+library(ggplot2)
 source('lib/MC/MetropolisHastings/MH.R')
 source('lib/MC/directGibbsSampler.R')
 
@@ -15,57 +16,39 @@ getInitialTheta <- function(m){
 }
 
 
-sampleTheta <- function(theta, obs){
-  print(sampleBernoulliP(theta$statePara))
+sampleBernTheta <- function(theta, obs){
+  print(theta$statePara)
+  sampledBernoulli <-  sampleBernoulliP(theta$statePara)estimLogProb
   list("delta" = sampleInitialDist(theta$delta),
        "gamma" = sampleGamma(theta$gamma),
-       "statePara" = sampleBernoulliP(theta$statePara)
+       "statePara" = sampledBernoulli 
        )
 }
 
 
-# delta, gamma, P_dens, obs 
-directMHSampler <- function(m, obs){
-  n <- length(obs$obs)
-  
-  # initialize uniformly 
-  theta <- getInitialTheta(m)
-  
-  runs <- 500
-  progress <- data.frame(delta1 = c(0), delta2 = c(0), 
-                         gamma11 = c(0), gamma12 = c(0), 
-                         gamma21 = c(0), gamma22 = c(0),
-                         p1 = c(0), p2 = c(0)
-                         )
-  for(n in 1:runs){
-    newTheta <- sampleTheta(theta, obs)
-    newP_dens <- buildBernDensity(newTheta$statePara)
-    P_dens    <- buildBernDensity(theta$statePara)
-    
-    newProb <- estimTProb(newTheta, newP_dens, obs)
-    oldProb <- estimTProb(theta, P_dens, obs)
-    
-    alpha <- min(1, newProb / oldProb)
-    
-    #accept
-    if(runif(1) <= alpha){
-      print('accepted!');
-      theta <- newTheta
-      progress <- thetaToProgress(progress, newTheta)
-    }else{
-      print('rejected!')
-    }
-    
-  }
-  
-  list("theta" = theta, "progress" = progress)
-}
+# initialize parameters 
+theta <- getInitialTheta(2)
+progress <- data.frame(delta1 = c(0), delta2 = c(0), 
+                       gamma11 = c(0), gamma12 = c(0), 
+                       gamma21 = c(0), gamma22 = c(0),
+                       p1 = c(0), p2 = c(0), accepted = c(FALSE)
+)
+
 
 source('lib/models/rainModel.R')
-rainySample <- read_csv("~/data/education/university/warwick/statistics/dissertation/programming/HMM_dissertation_2019/common/rainySample.csv")
-rainySample$time <- rainySample$X1 - 1
+rainySample <- read_csv("~/data/education/university/warwick/statistics/dissertation/programming/HMM_dissertation_2019/common/rainySample.csv",
+                        col_names = c('time', 'states', 'obs', 'prob'), skip = 1)
+rainySample$time <- rainySample$time - 1
 
-estim_theta <- directMHSampler(2, rainySample)
 
+ret <- directMHSampler(2, rainySample, theta, progress, sampleBernTheta, 
+                       buildBernDensity, BernThetaToProgress)
+ret$progress$time <- 1:length(ret$progress$p1)
+ggplot(ret$progress, aes(x=time)) + 
+  geom_line(aes(y = p1), color = "darkred") + 
+  geom_line(aes(y = p2), color="darkblue") +
+  scale_color_manual(values = c("darkred", "darkblue"))+
+  ggtitle('Course of Bernoulli paramters') +
+  ylab('p1, p2')
 
 
