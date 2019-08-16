@@ -61,6 +61,9 @@ All of those parameters are constrained:
 
 When choosing a new proposal $\tilde{\Theta}$ from the current sample $\Theta$, with a step sampled from a normal distribution, it is not immediately clear how to ensure that the new proposal satisfies the constraints. 
 
+The easiest option is to simply reject all samples which are not valid. Note that this may lead to a high rejection-rate - especially in high-dimensional problems, the rejection-rate can become prohibitively high. Hence, we are going to present a number of alternative options below. 
+
+
 \subsubsection*{Natural and Working Parameters}
 A common approach to deal with this is to apply transformations such as the $log$-transformation. For instance, if a parameter is constrained to $[0,1]$, we could work in a transformed space instead. 
 For instance, if our algorithm was to suggest values in $(-\infty, \infty)$ (so-called \textit{working parameters}), we could apply the log-transformation to map those values into $[0,1]$ (so-called \textit{natural parameters}); this would ensure that all new proposals are valid from a model point of view. 
@@ -71,6 +74,11 @@ However, the steps are usually normally distributed in the space of the natural 
 
 
 \subsubsection*{''Bumping'' of Parameters}
+When naiively using a symmetric distribution to obtain a new proposal for a parameter from the current one, we may come up with an invalid proposal. For instance, if the paramter in question is constrained to $[0,1]$, choosing a $\mathcal{N}(0, \sigma)$ step to alter the current sample may yield a proposal outside of these bounds.
+ 
+There are two approaches to this problem: Either, one alters the new proposal such that it corresponds to the constraints, or one uses a sampling method respecting the constraints in a natural way. 
+''Bumping'' is a simple methodology for the former. 
+
 Let $p \in [0,1]$ be a parameter and $s: [0,1] \rightarrow \R$ be a function mapping $p$ to a new proposal. Then we draw new samples as follows:
 \codeBox{Bumping of parameters}{
 	\begin{algorithmic}
@@ -83,6 +91,8 @@ Let $p \in [0,1]$ be a parameter and $s: [0,1] \rightarrow \R$ be a function map
 				\Else
 					\State $p \gets 1 - (\tilde{p} - 1)$
 				\EndIf
+			\Else
+				\State reject new proposal
 			\EndIf
 	\end{algorithmic}
 }
@@ -117,6 +127,7 @@ Let us denote the normal distribution, truncated to the interval $[a, b]$ with $
 	    & \, \text{otherwise}
 		\end{cases}
 	\end{align*}
+	where $\Phi$ is the cdf of a standard normal random variable.
 	\label{lem:cdf}
 \end{lemma}
 
@@ -140,11 +151,112 @@ F_X^{-1}(U[0, 1]) \sim X
 
 Lemma \ref{lem:cdf} provides us with the cdf of a truncated normal distribution; using the inversion method, we can thus sample from a truncated normal distribution. Please note that neither the cdf nor the inverse are available in analytical forms; still, numerical approximations are readily available in R.
 
-Note that sampling methods which do not involve $\Phi$ or $\Phi^{-1}$ are also available; notably, \cite{Robert95simulationof} proposes a method based on Rejection-Sampling. 
+Specifically, we have
+\begin{align*}
+		U[0, 1] &\sim 	F_{ \tx \, | \, \tx \in [a, b]}( \tx \, | \, \tx \in [a, b]) \\
+		U[0, 1] &\sim \frac{\nd{\tx} - \nd{a}}{\nd{b} - \nd{a}} \\
+		U[0, 1] \left(\nd{b} - \nd{a}\right) &\sim \nd{\tx} - \nd{a} \\
+		\nd{a} + U[0, 1] \left(\nd{b} - \nd{a}\right) \sim \nd{\tx} \\
+		\Phi^{-1} \left(
+			\nd{a} + U[0, 1] \left(\nd{b} - \nd{a}\right)
+		\right)
+		&\sim \tx
+\end{align*}
+where $\tx = \tx \, | \, \tx \in [a, b]$ for the last few lines for notational convenience. 
+
+Note that this method of sampling can be expressed in R very concisely as 
+\begin{verbatim}
+	x = qnorm(  pnorm(a,mu,sigma) + runif(1)*(pnorm(b,mu,sigma) - pnorm(a,mu,sigma))  
+\end{verbatim}
+
+Note that sampling methods which do not involve $\Phi$ or $\Phi^{-1}$ are also available: notably, Robert\cite{Robert95simulationof} proposes a method based on Rejection-Sampling.
+\vspace{0.5cm}
+
+\codeBox{Robert's Drawing from Truncated Normal Distribution}{
+	(Considering only the case that $0 \in [a, b]$)
+	\begin{algorithmic}
+		\State $z \gets U[a, b]$
+		\State $\delta \gets exp\left(- \frac{z^2}{2}\right)$
+		\State $u \gets U[0, 1]$
+		\If {$u \leq \delta$ }
+			\State accept sample
+		\Else
+			\State restart at step 1
+		\EndIf
+	\end{algorithmic}
+}
+
+However, numerical experiments with R have shown that the sampling using the approximative method presented is faster than the Rejection Sampling proposed by Roberts. 
  
 
 % R code for sampling:
 % x = qnorm(  pnorm(a,mu,sigma) + runif(1)*(pnorm(b,mu,sigma) - pnorm(a,mu,sigma))  
+
+\subsubsection{Multiplicative Random Walk}
+Cappé \cite{cappe} proposes an interesting class of Metropolis-Hastings-Steps which are all based on a \textit{multiplicative random walk}. Let us first consider a parameter $p$ with constraint $p \in \R_{\geq 0}$. Then let the new proposal $\tilde{p}$ be defined as 
+\[
+	log\left(\tilde{p}\right) := log(p) + X
+\]
+where $X \sim \mathcal{N}(0, \sigma)$.
+
+\begin{lemma}
+	When defined as above, we have $Q\left(log(\tilde{p}), log(p)\right) = Q\left( log(p), log(\tilde{p})\right)$.
+	
+	Note, that we do \textit{not} have
+	\[
+	Q\left(\tilde{p}, p\right) = Q\left( p , \tilde{p}\right)
+	\]
+\end{lemma}
+
+	 Please note that even though $Q$ is symmetric, we need to invoke the substitution method to obtain the correct acceptance probability. 
+	 In particular, note that 
+	 \begin{align*}
+	 	\int f(x) dx = \int_{log(exp(y))} f(x) dx &= 
+	 	\int_{log(y)} \frac{1}{\sqrt{2 \pi \sigma}} e^{- \frac{ \left(exp(x) - 0\right)^2}{2 \sigma^2}} \left(exp(x)\right)^{\prime}  \, dx\\
+	 	&= \int_{log(y)} \frac{1}{\sqrt{2 \pi \sigma}} e^{- \frac{ \left(exp(x) - 0\right)^2}{2 \sigma^2}} exp(x) \, dx
+	 \end{align*} 
+	 
+	 This means that when manipulating $p$ in log-space, the acceptance ratio needs to be altered as follows\footnote{Note that this also implies that $0$ must not be part of the domain of $p$. }:
+	 \[
+	 	\alpha := min \Bigg\{ 
+	 		1, \frac{\tip{\tilde{\Theta}}}{\tip{\Theta}} \, \frac{\tilde{p}}{p}
+	 		\Bigg\}
+	 \]
+	 
+	 \begin{figure}
+	 	\includegraphics[height=0.3\textheight]{img/carre_sigma_biased.png}
+	 	\caption{Sampling $\sigma$ by applying Metropolis-Hastings with the multiplicative random walk, 100 chains with each 100 steps and the initial sample drawn from $U[0, 10]$}
+	 	\label{fig:carre_sigma_not_uniform}
+	 \end{figure}
+	 
+	 Note that while the sampling is uniform \textit{on the log space}, it is not uniform in normal space. Figure \ref{fig:carre_sigma_not_uniform} shows a histogram of $\sigma$ sampled by the aforementioned method. As $\sigma$ is unbounded in this case, it is indeed not possible to uniformly sample $\sigma$\footnote{There exists no unbounded, uniform distribution}. However, this methodology (needlessly) introduces a prior which is \textit{inherent} to the sampling method itself and will affect any intentional prior which might be defined in addition. 
+	 
+	 Cappé \cite{cappe2003} further suggests to extend this methodology to accommodate parameters $p_1, \dots, p_n \in [0,1]$ with additional constraint $\sum p_i = 1$. This is achieved by obtaining $\tilde{p_i}$ as defined above and then setting
+	 \[
+	 	p_i^{\prime} := \frac{\tilde{p_i}}{\sum_{j=1} \tilde{p_j}}
+	 \]
+	 as the new proposed value. Cappé suggests to further use $Exp(1)$-priors on $p_i^{\prime}$. 
+	 
+	 Note that - just as noted above, the resulting distributions are \textit{biased}. 
+	 
+	 
+ 
+	 \begin{minipage}{\linewidth}
+	 	\centering
+	 	\begin{minipage}{0.45\linewidth}
+	 		\begin{figure}[H]
+	 				\includegraphics[width=0.9\linewidth]{img/carre_estimated_density_p1_p2.png}
+	 			\caption{The estimated density of the samples p1, p2 drawn by Carré's method. The samples are clearly biased towards the middle and not uniformly distributed}
+	 		\end{figure}
+	 	\end{minipage}
+	 	\hspace{0.05\linewidth}
+	 	\begin{minipage}{0.45\linewidth}
+	 		\begin{figure}[H]
+	 				\includegraphics[width=0.9\linewidth]{img/carre_p1_p2_hists.png}
+	 			\caption{The estimated histograms of the samples p1, p2 drawn by Carré's method. The samples are clearly biased towards the middle and not uniformly distributed}
+	 		\end{figure}
+	 	\end{minipage}
+	 \end{minipage}
 
 
 
