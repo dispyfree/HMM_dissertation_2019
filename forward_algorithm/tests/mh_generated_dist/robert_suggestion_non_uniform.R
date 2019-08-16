@@ -4,8 +4,8 @@ library(gridExtra)
 dat <- data.frame(x = c(0), y = c(0))
 
 sigma <- 0.1
-steps <- 100
-samples <- 100
+steps <- 200
+samples <- 200
 
 for(j in 1:samples){
   curXt <- runif(1, 0, 1)
@@ -38,11 +38,11 @@ ggplot(dat, aes(x = x, y = y)) +
 
 
 p1 <- ggplot(data=dat, aes(x)) +
-  geom_histogram(bins=20) +
+  geom_histogram(breaks = seq(from = 0, to = 1, by = 0.05)) +
   ggtitle('p1 sampled with Carré\'s method')
 
 p2 <- ggplot(data=dat, aes(y)) +
-  geom_histogram(bins=20) +
+  geom_histogram(breaks = seq(from = 0, to = 1, by = 0.05)) +
   ggtitle('p2 sampled with Carré\'s method')
 
 grid.arrange(p1, p2, nrow=2)

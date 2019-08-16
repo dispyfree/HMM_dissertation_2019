@@ -61,7 +61,7 @@ All of those parameters are constrained:
 
 When choosing a new proposal $\tilde{\Theta}$ from the current sample $\Theta$, with a step sampled from a normal distribution, it is not immediately clear how to ensure that the new proposal satisfies the constraints. 
 
-The easiest option is to simply reject all samples which are not valid. Note that this may lead to a high rejection-rate - especially in high-dimensional problems, the rejection-rate can become prohibitively high. Hence, we are going to present a number of alternative options below. 
+The easiest option is to simply reject all samples which are not valid. While incurring a high rejection rate\footnote{Which can be prohibitively high for high-dimensional problems}, this methodology becomes unfeasible if we consider constraints as in (1) above. 
 
 
 \subsubsection*{Natural and Working Parameters}
@@ -96,6 +96,17 @@ Let $p \in [0,1]$ be a parameter and $s: [0,1] \rightarrow \R$ be a function map
 			\EndIf
 	\end{algorithmic}
 }
+
+\begin{figure}
+	\centering
+	\includegraphics[height = 0.3\textheight]{img/bumpItBaby.png}
+	\caption{Sampling of $p \in [0,1]$ with bumping method and $\sigma= 0.1$ for $200$ chains with each $200$ samples. }
+	\label{fig:bumpingIsUniform}
+\end{figure}
+
+Figure \ref{fig:bumpingIsUniform} shows that sampling with the bumping method does indeed uniformly cover the interval $[0,1]$\footnote{Note that as the sample size increases, the distribution continues to converge towards the uniform distribution. This has been confirmed generating several histograms and verifying that the overall shape attained is consistently almost constant.}
+As we shall see, this is not true for many other methods. 
+
 We note the following:
 \begin{enumerate}
 	\item the interval can easily be generalised
@@ -159,14 +170,14 @@ Specifically, we have
 		\nd{a} + U[0, 1] \left(\nd{b} - \nd{a}\right) \sim \nd{\tx} \\
 		\Phi^{-1} \left(
 			\nd{a} + U[0, 1] \left(\nd{b} - \nd{a}\right)
-		\right)
+		\right) \, \sigma + \mu
 		&\sim \tx
 \end{align*}
 where $\tx = \tx \, | \, \tx \in [a, b]$ for the last few lines for notational convenience. 
 
 Note that this method of sampling can be expressed in R very concisely as 
 \begin{verbatim}
-	x = qnorm(  pnorm(a,mu,sigma) + runif(1)*(pnorm(b,mu,sigma) - pnorm(a,mu,sigma))  
+	x = qnorm(  pnorm(a,mu,sigma) + runif(1)*(pnorm(b,mu,sigma) - pnorm(a,mu,sigma))  * sigma + mu
 \end{verbatim}
 
 Note that sampling methods which do not involve $\Phi$ or $\Phi^{-1}$ are also available: notably, Robert\cite{Robert95simulationof} proposes a method based on Rejection-Sampling.
@@ -187,7 +198,15 @@ Note that sampling methods which do not involve $\Phi$ or $\Phi^{-1}$ are also a
 }
 
 However, numerical experiments with R have shown that the sampling using the approximative method presented is faster than the Rejection Sampling proposed by Roberts. 
+
+
+\begin{figure}
+	\includegraphics[width=\linewidth]{img/truncatedNormalAlsoBiased.png}
+	\caption{Samples drawn using truncated normal distribution as proposal; 200 chains with 200 samples each, $\sigma = 0.1$}
+	\label{fig:truncatedAlsoBiased}
+\end{figure}
  
+ Unfortunately, as figure \ref{fig:truncatedAlsoBiased} shows, sampling with the truncated normal distribution method also introduces bias as the samples are not uniformly distributed. 
 
 % R code for sampling:
 % x = qnorm(  pnorm(a,mu,sigma) + runif(1)*(pnorm(b,mu,sigma) - pnorm(a,mu,sigma))  
@@ -237,7 +256,7 @@ where $X \sim \mathcal{N}(0, \sigma)$.
 	 \]
 	 as the new proposed value. Cappé suggests to further use $Exp(1)$-priors on $p_i^{\prime}$. 
 	 
-	 Note that - just as noted above, the resulting distributions are \textit{biased}. 
+	 Note that - just as noted above, the resulting distributions are heavily \textit{biased}. Fig \ref{fig:carre_p1_p2_hist} and \ref{fig:carre_p1p2_estimated_dens} show estimated densities and histograms of $p1, p2 \in [0,1]$ with $p1 + p2 = 1$ sampled with $100$ chains each having $100$ steps and $\sigma = 0.1$. Please note that the sample is biased regardless of whether the proposed priors are used or not. Hence, this method of drawing numbers has an \textit{inherent prior} which will distort any extra, intended prior that could be defined in addition. 
 	 
 	 
  
@@ -246,14 +265,16 @@ where $X \sim \mathcal{N}(0, \sigma)$.
 	 	\begin{minipage}{0.45\linewidth}
 	 		\begin{figure}[H]
 	 				\includegraphics[width=0.9\linewidth]{img/carre_estimated_density_p1_p2.png}
-	 			\caption{The estimated density of the samples p1, p2 drawn by Carré's method. The samples are clearly biased towards the middle and not uniformly distributed}
+	 			\caption{The estimated density of the samples p1, p2 drawn by Carré's method (200 chains, 200 steps, $\sigma = 0.1$). The samples are clearly biased towards the middle and not uniformly distributed}
+	 			\label{fig:carre_p1p2_estimated_dens}
 	 		\end{figure}
 	 	\end{minipage}
 	 	\hspace{0.05\linewidth}
 	 	\begin{minipage}{0.45\linewidth}
 	 		\begin{figure}[H]
 	 				\includegraphics[width=0.9\linewidth]{img/carre_p1_p2_hists.png}
-	 			\caption{The estimated histograms of the samples p1, p2 drawn by Carré's method. The samples are clearly biased towards the middle and not uniformly distributed}
+	 			\caption{The estimated histograms of the samples p1, p2 drawn by Carré's method (200 chains, 200 steps, $\sigma = 0.1$). The samples are clearly biased towards the middle and not uniformly distributed}
+	 			\label{fig:carre_p1_p2_hist}
 	 		\end{figure}
 	 	\end{minipage}
 	 \end{minipage}
