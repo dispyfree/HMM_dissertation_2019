@@ -72,7 +72,6 @@ sampleGamma <- function(m, hiddenStates, prior){
   
   # sample new transition probabilities
   gamma <- matrix(rep.int(0, m*m), nrow = m)
-  w <- 0.8
   for(i  in 1:m){
     print(sample[i, ])
     print(eGamma[i, ])

@@ -1,0 +1,59 @@
+The implementation herein follows the techniques presented in Zucchini\cite{zucchini}.
+
+\subsection{Sampling of Hidden States}
+	The states are sampled successively in a fixed order from $C_T, \dots, C_1$. 
+	
+	Specifically, rely on the following for sampling:
+	\[
+		\prob{C_t}{C_{t+1}^T, x^{T}, \Theta} \propto 
+		\uP{X_t, C_t} \, \prob{C_{t+1}}{C_t} = \alpha_t(i) \, \Gamma_{i, C_{t+1}} 
+	\]
+	$\alpha_t(i)$ is available from a forward-pass and $\Gamma_{i, C_{t+1}}$ is a constant given $C_{t+1}$. Hence, the discrete probabilities for drawing $C_t$ are readily available. 
+	
+	
+ \subsection{Sampling $\Gamma$}
+ 	It is useful to establish a few properties of the Dirichlet distribution:
+	 \begin{lemma}
+	 	Let $X \sim \text{Dir}(\alpha_1, \dots, \alpha_k)$ with $\alpha_i > 0$ and $\sum \alpha_i  = 1$.\\
+	 	
+	 	Then $\text{supp}(X) = (x_1, \dots, x_k)$ with $x_i \in (0, 1)$ and $\sum x_i = 1$. Furthermore we have
+	 	\begin{align}
+	 	\expect{X_i} = \frac{\alpha_i}{\sum_{j} \alpha_j}
+	 	\label{dirich_mean}
+	 	\end{align}
+	 \end{lemma}
+ 	
+ 	In effect, the Dirichlet distribution can be used to sample discrete distributions with $m$ components. As equation \ref{dirich_mean} shows, the distribution's parameters determine the expected value of the different components. Also the degree to which mass is centered around the means specified above can be controlled; the higher the distribution's parameters are in magnitude, the more likely are we to draw less peaked (i.e. more uniform) distributions\footnote{This notion is captured by the term \textit{concentration parameter}}. 
+ 	
+ 	Note that as the chain's length approach infinity, the proposal distribution will hence also converge towards a uniform distribution. However, the literature consulted for this methodology suggests to indeed use absolute counts for estimates $\tilde{\Gamma}$ instead of converting those to relative probabilities. To be comparable to this original research, we also use absolute counts in this setting. 
+ 
+ 
+
+
+ 	$\Gamma$ is sampled in two steps:
+ 	\begin{itemize}
+ 		\item Firstly, given the current sequence of states, the entries are estimated as 
+ 			\[
+ 				\tilde{\Gamma}_{i, j} := \frac{ 
+ 					\Bigg| \Big\{ t \, | \, c_t = i \land c_{t+1} = j \Big\}\Bigg|	
+ 				 }{
+ 			 			\Bigg| \Big\{ t \, | \, c_t = i \Big\}\Bigg|	
+ 		 		}
+ 			\]
+ 			Note that $\tilde{\Gamma}$  is set to $0$ should the denominator be zero. 
+ 		\item Secondly, $\Gamma_{i, \cdot}$ is drawn as 
+ 			\[
+ 				\Gamma_{i, \cdot} \sim  \text{Dir}(10 \times (\text{prior} + \tilde{\Gamma}_{i, \cdot }))
+ 			\]
+ 			where Dir is the \textit{Dirichlet} distribution. 
+ 	\end{itemize}
+ 
+ 	The prior can be chosen arbitrarily and defaults to  $\left(m, \dots (m \, \text{times})\right)$.
+ 	
+ 	
+ 	\subsection{Sampling Bernoulli Probabilities}
+ 		The Bernoulli probabilities $p \in [0,1]$ are sampled by applying 
+ 	
+ 		
+ 	
+ 		
