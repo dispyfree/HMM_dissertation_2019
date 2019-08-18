@@ -8,10 +8,10 @@ delta1 <- c(2, 1) / 3.0
 gamma1 <- matrix(c(1, 0, 0, 1), 
                  nrow = 2, byrow = TRUE)
 P <- c(function(){
-    rpoiss(r, 1)
+    rpois(r, 1)
   },
   function(){
-    rpoiss(r, 2)
+    rpois(r, 2)
   }
 )
 

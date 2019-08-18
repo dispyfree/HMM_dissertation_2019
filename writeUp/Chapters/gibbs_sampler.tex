@@ -52,7 +52,109 @@ The implementation herein follows the techniques presented in Zucchini\cite{zucc
  	
  	
  	\subsection{Sampling Bernoulli Probabilities}
- 		The Bernoulli probabilities $p \in [0,1]$ are sampled by applying 
+ 		For Bernoulli probabilities, we apply a uniform distribution we apply a uniform prior on a naiive estimate. 
+ 		Specifically, let the Bernoulli probability parameterising state $C_t = i$ be defined as  
+ 		\[
+ 			\tilde{p_i} := \frac{\setSize{t}{C_t = i \land X_t = 1}}{\setSize{t}{C_t = i}}
+ 		\]
+ 		
+ 		
+ 	\subsection{Sampling Poisson Parameters}
+		Sampling from a Poisson model is significantly more involved  than a simple Bernoulli model. We will present the approach taken by Scott\cite{scott}. 
+		
+		To increase tractability of the model and avoid a common problem known as \textit{label switching}, Scott proposes to parameterise the Poisson distributions in terms of the \textit{differences in $\lambda$}. 
+		
+		In particular, let us assume w.l.o.g. that the natural parameters $\lambda_1, \dots, \lambda_s$ are ordered, i.e. $\lambda_i < \lambda_j $ for $ i < j$. Then define $\tau_i := \lambda_i - \lambda_{i-1}$ with $\tau_1 \equiv 0$ by definition, i.e. we parameterise the differences in rates instead of the absolute rates.  Note that by summing those individual differences, all of the original rates can be obtained. Note that 
+		\[
+		X + Y \sim Poi(\lambda_1 + \lambda_2) \quad \text{if} \, X \sim \text{Poi}(\lambda_1), Y \sim \text{Poi}(\lambda_2)
+		\]
+		which provides a mathematical foundation for this decomposition. 
+		
+		Hence, we work with Poisson distributions whose rates correspond to the differences in rates of the original distributions. Let us shortly denote the former as ''working distributions''.Summing the first $i$ working distributions will hence yield the $i$th original distribution. 
+		From now on, we will almost exclusively refer to the ''working distributions''. Hence, insofar obvious from context, we will simply call them ''distributions'' as well.
+		
+		\subsubsection*{Regimes}
+		
+			
+			Let us further define \textit{regimes}; a regime describes which portions of the distributions are active at any given time. The $i$th regime includes the first $i$ distributions. Hence, the first $i$th regime is said to be \textit{active} if and only if the first $i$ distributions are active. 
+
+			
+			In particular, let $1 \leq h_t \leq s$  denote the regime being active at time $t$, let 
+			\[
+				d_{it} = \begin{cases}
+					1 &\quad \text{iff} \, i \leq h_t\\
+					0 &\quad \text{otherwise}
+				\end{cases}
+			\]
+			denote whether distribution $i$ is active at time $t$ (it is active iff $d_{it}$ assumes 1).
+			
+			Note that this notation ties in neatly with our previous definitions: in particular, $C_t = i \iff h_t = i$\footnote{in fact, we only introduce this additional notation to be consistent with Scott}. 
+			
+			Furthermore, we assign each (working) distribution a ''contribution'' toward any observation: Let $x_{it}$ (and $X_{it}$ respectively) be the contribution of the $i$th distribution toward $x_t$. 
+			
+			
+		\subsubsection{Sampling Contributions}
+			Let us establish the following non-obvious result:
+		
+			\begin{lemma}
+				\[\uP{X_{jt} = x_{jt}, 1 \leq j \leq s} \sim \text{MN}(\eta_1, \dots, \eta_s) 
+				\]
+				with \textit{MN} denoting the Multinomial Distribution and
+				\[
+					\eta_i := \frac{\tau_i}{\sum_k^{h_t} \tau_k}
+				\]
+			\end{lemma}
+		
+			\begin{proof}
+				As $X_{jt} \sim \text{Poi}(\tau_j)$, we have
+				\begin{align*}
+					\uP{X_{jt} = x_{jt}}& = 
+					\tau_j^{x_{jt} d_{jt}} \,
+					\frac{e^{- \tau_j d_{jt}}}{x_{jt}!} \quad \text{hence} \\
+					\uP{X_{jt} = x_{jt}, 1 \leq j \leq s}
+					&= \begin{cases}
+						 \prod_j 	\frac{e^{- \tau_j d_{jt}}}{x_{jt}!}
+						 	&\quad \text{if} \, \sum\limits_{j} x_{jt} = x_t \\
+						 0  & \quad \text{otherwise}
+					\end{cases}
+				\end{align*}
+				With $\sum_{j} x_{jt} = x_t \,  \left(\sum_{j} X_{jt} = X_t\right)$ we have
+				\[
+					\uP{X_t = x_t} = \left(
+						\sum_{j=1}^{h_t} \tau_j
+					\right)^{x_t} 
+%					
+					\frac{e^{- \sum_{j}^{h_t} \tau_j}}{
+					x_t!}	
+				\]
+				So altogether we have
+				\begin{align*}
+					\prob{X_{jt} = x_{jt}, 1 \leq j \leq s}{X_t = x_t} &= 
+					\frac{\uP{X_jt = x_jt \land X_t = x_t}}{\uP{X_t = x_t}}
+					\quad \text{omitting indices j=1, 2, ..., s} \\
+					&= \frac{x_t!}{\prod\limits_j x_{jt}!}
+					\frac{
+						\prod\limits_j \tau_j^{x_{jt} d_{jt}}}
+					{
+							\left(
+							\sum\limits_{j=1}^{h_t} \tau_j
+							\right)^{ x_t}
+					} \\
+				&= \frac{x_t!}{\prod\limits_j x_{jt}!}\quad
+				\prod\limits_{j} \left(
+					\frac{\tau_i}{\sum_{k=1}^{h_t} \tau_k}
+				\right)^{x_{jt} d_{jt}} \\
+				&= \frac{x_t!}{\prod\limits_j x_{jt}!}\quad
+				\prod\limits_{j} \left(
+					\eta_j
+				\right)^{x_{jt} d_{jt}}
+				\end{align*}
+				as claimed. 
+			\end{proof}
+		
+		Note that as $h_t$ sampled by sampling $C_t$; this is accomplished by sampling backwards as outlined above. Hence, $d_{jt}$ is known and $x_{jt}$ may be sampled using aforementioned distribution. 
+		
+		 
  	
  		
  	

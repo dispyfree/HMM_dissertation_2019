@@ -48,11 +48,11 @@ sampleHiddenStates <- function(theta, P_dens, obs){
 }
 
 # accepts vector of log(a), log(b), log(c), ... 
-# returns a, 1-a 
+# 
+# TODO: check mathematically whether this makes sense!!!
 logProbToRatio <- function(dist){
-  rat <- exp(dist[2] - dist[1])
-  p1Prob <- 1.0 / (1.0 + rat)
-  c(p1Prob, 1 - p1Prob)
+  tot <- logSum(dist)
+  exp(dist - tot)
 }
 
 
@@ -73,8 +73,6 @@ sampleGamma <- function(m, hiddenStates, prior){
   # sample new transition probabilities
   gamma <- matrix(rep.int(0, m*m), nrow = m)
   for(i  in 1:m){
-    print(sample[i, ])
-    print(eGamma[i, ])
     gamma[i, ] <- rdirichlet(1, 10 * (sample[i, ] +  eGamma[i, ]))
   }
   gamma 
@@ -132,10 +130,60 @@ sampleTheta  <- function (m, hiddenStates, obs, oldDelta, noPriorRuns){
   oldDelta <- oldDelta * noPriorRuns
   oldDelta[hiddenStates[1]] <- oldDelta[hiddenStates[1]] + 1
   oldDelta <- oldDelta / (noPriorRuns + 1)
-  sampleBernoulli(m, hiddenStates, obs)
   list("gamma" = sampleGamma(m, hiddenStates, alphaPrior), 
        "statePara" = sampleBernoulli(m, hiddenStates, obs),  #c(0.9, 0.3), 
        "noRuns" = noPriorRuns + 1,
        "delta" = oldDelta #c(1.0, 0.5) / 1.5
        )
+}
+
+
+
+samplePoissonTheta  <- function (theta, m, hiddenStates, obs, oldDelta, noPriorRuns, taus){
+  T <- length(obs$obs)
+  # uniform over all distributions
+  alphaPrior <- rep.int(1.0 / m, m)
+  
+  oldDelta <- oldDelta * noPriorRuns
+  oldDelta[hiddenStates[1]] <- oldDelta[hiddenStates[1]] + 1
+  oldDelta <- oldDelta / (noPriorRuns + 1)
+  
+  # according to scott:
+  # 1) sample hidden states
+  # 2) sample contributions 
+  # 3) resample taus
+  contrib <- sampleContributions(T, m, hiddenStates, obs, taus)
+  taus <- sampleTaus(contrib, hiddenStates, m)
+  newGamma <- sampleGamma(m, hiddenStates, alphaPrior)
+
+  list("gamma" = newGamma, 
+       "statePara" = taus,  #c(0.9, 0.3)
+       "noRuns" = noPriorRuns + 1,
+       "delta" = oldDelta #c(1.0, 0.5) / 1.5
+  )
+}
+
+sampleTaus <- function(contributions, hiddenStates, m){
+  sampledTaus <- rep.int(0, m)
+  for(hiddenState in 1:m){
+    # sum of all contributions
+    allContrib <- sum(contributions[, hiddenState])
+    # no of activations of this tau
+    noActivations <- sum(hiddenStates >= hiddenState)
+    
+    sampledTaus[hiddenState] <- rgamma(1, 1 + allContrib, 1 + noActivations)
+  }
+  sampledTaus
+}
+
+sampleContributions <- function(T, s, hiddenStates, obs, taus){
+  contrib <- matrix(rep.int(0, T*s), nrow = T, ncol = s)
+  # first hidden state does not produce an observation
+  obsHiddenStates <- tail(hiddenStates, -1)
+  for(i in 1:T){
+    h_t <- obsHiddenStates[i]
+    activeTaus <- taus[1:h_t]
+    contrib[i, 1:length(activeTaus)] <- rmultinom(1, obs$obs[i], activeTaus)
+  }
+  contrib
 }

@@ -34,7 +34,8 @@ genMC <- function(u, gamma, P, P_density, T){
     prob <- c(prob, newProb)
   }
   
-  list(states = states, obs = obs, prob = prob)
+  times <- c(0, 1:(length(obs) - 1))
+  data.frame(states = states, obs = obs, prob = prob, time = times)
 }
 
 
@@ -43,23 +44,23 @@ genMC <- function(u, gamma, P, P_density, T){
 # observation 1: sunshine, obs 2: rain
 
 # use stationary distribution of transition matrix
-u1 <- c(1.0, 0.5) / 1.5
-gamma1 <- matrix(c(0.9, 0.1, 0.2, 0.8), nrow = 2, byrow = TRUE)
-P <- c(function(){
-          rdiscrete(1, c(0.9, 0.1))
-},
-       function(){
-         rdiscrete(1, c(0.3, 0.7))
-       }
-)
-
-P_density <- c(function(x){
-  ddiscrete(x, c(0.9, 0.1))
-},
-function(x){
-  ddiscrete(x, c(0.3, 0.7))
-}
-)
+# u1 <- c(1.0, 0.5) / 1.5
+# gamma1 <- matrix(c(0.9, 0.1, 0.2, 0.8), nrow = 2, byrow = TRUE)
+# P <- c(function(){
+#           rdiscrete(1, c(0.9, 0.1))
+# },
+#        function(){
+#          rdiscrete(1, c(0.3, 0.7))
+#        }
+# )
+# 
+# P_density <- c(function(x){
+#   ddiscrete(x, c(0.9, 0.1))
+# },
+# function(x){
+#   ddiscrete(x, c(0.3, 0.7))
+# }
+# )
 
 #sampleReal <- genMC(u1, gamma1, P, P_density, 100)
 #write.csv(sampleReal, file='rainySample.csv')

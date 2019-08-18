@@ -21,11 +21,12 @@ for(j in 1:samples){
     curX1 <- curX * exp(rnorm(1, mean =0, sd = sigma))
     curY1 <- curY * exp(rnorm(1, mean = 0, sd = sigma))
     
+    
     #tentative solution
     curXt <- curX1 / (curX1 + curY1)
     curYt <- curY1 / (curX1 + curY1)
-     if(runif(1) <= correctF(curXt) * (curXt / curX) * (curYt / curY)
-        * (exp(-curXt + curX - curYt + curY))){
+     if(runif(1) <= (curXt / curX) * (curYt / curY) *
+        correctF(curXt) * (exp(-curXt + curX - curYt + curY))){
        curX <- curXt
        curY <- curYt
      }

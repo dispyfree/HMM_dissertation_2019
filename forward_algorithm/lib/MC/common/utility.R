@@ -1,5 +1,6 @@
 library(purrr)
 library(testit)
+library(lambda.tools)
 
 # samples by altering delta with normal distribution
 # always returns a valid distribution
@@ -69,13 +70,13 @@ sampleBernoulliP <- function(probs){
 
 
 
-# maps vector of probabilities to vector of Bernoulli pdfs
-buildBernDensity <- function(ps){
-  assert(all(ps >= 0 & ps <= 1))
+# maps vector of regime parameters to vector of Poisson pdfs
+buildPoissonDensityFromTau <- function(taus){
+  assert(all(taus > 0))
   
-  P_density <- map(ps, function(p){
+  P_density <- map(cumsum(taus), function(lambda){
     function(x){
-      ddiscrete(x, c(p, 1 - p), values = c(1, 0))
+      dpois(x, lambda)
     }})
   P_density
 }
