@@ -13,7 +13,7 @@ assert <- testit::assert
 # then samples backwards by using 
 # P(X^t = x^t, C_t) * P(C_{t+1} | C_t) = \alpha_t(i) * \gamma{i, C_{t+1}}
 # method adopted from Zucchini
-sampleHiddenStates <- function(theta, P_dens, obs){
+sampleHiddenStates <- function(theta, P_dens, obs, hs){
   probs <- estimTLogProb(theta, P_dens, obs)
   alphas <- probs$alphas
   
@@ -34,8 +34,16 @@ sampleHiddenStates <- function(theta, P_dens, obs){
   states <- c(lastState)
   
   for(i in (n - 1) : 1){
+    # todo: which one to choose?
     probs <- getBackwardProbs(alphas[i,], theta$gamma, lastState)
-    newState <- rdiscrete(1, logProbToRatio(probs))
+    # probs <- rep.int(0, length(alphas[1, ]))
+    # if(i > 1 && !is.na(hs)){
+    #   probs <- probs + log(theta$gamma[hs[i-1], ])
+    # }
+    # probs <- probs + log(theta$gamma[, lastState])
+    # probs <- probs + log(sapply(P_dens, function(f){ f(obs$obs[i])}))
+    # 
+     newState <- rdiscrete(1, logProbToRatio(probs))
     
     states <- c(newState, states)
     lastState <- newState
@@ -52,7 +60,8 @@ sampleHiddenStates <- function(theta, P_dens, obs){
 # TODO: check mathematically whether this makes sense!!!
 logProbToRatio <- function(dist){
   tot <- logSum(dist)
-  exp(dist - tot)
+  normalSpace <- exp(dist - tot)
+  normalSpace / sum(normalSpace)
 }
 
 
@@ -123,7 +132,7 @@ sampleBernoulli <- function(m, hiddenStates, obs){
 }
 
 # samples gamma, bernoulli and delta in one go
-sampleTheta  <- function (m, hiddenStates, obs, oldDelta, noPriorRuns){
+sampleBernoulliTheta  <- function (m, hiddenStates, obs, oldDelta, noPriorRuns){
   # uniform over all distributions
   alphaPrior <- rep.int(1.0 / m, m)
   
@@ -157,7 +166,7 @@ samplePoissonTheta  <- function (theta, m, hiddenStates, obs, oldDelta, noPriorR
   newGamma <- sampleGamma(m, hiddenStates, alphaPrior)
 
   list("gamma" = newGamma, 
-       "statePara" = taus,  #c(0.9, 0.3)
+       "statePara" =  taus, # taus,  #c(0.9, 0.3)
        "noRuns" = noPriorRuns + 1,
        "delta" = oldDelta #c(1.0, 0.5) / 1.5
   )
@@ -169,7 +178,7 @@ sampleTaus <- function(contributions, hiddenStates, m){
     # sum of all contributions
     allContrib <- sum(contributions[, hiddenState])
     # no of activations of this tau
-    noActivations <- sum(hiddenStates >= hiddenState)
+    noActivations <- sum(tail(hiddenStates, -1) >= hiddenState)
     
     sampledTaus[hiddenState] <- rgamma(1, 1 + allContrib, 1 + noActivations)
   }
@@ -186,4 +195,34 @@ sampleContributions <- function(T, s, hiddenStates, obs, taus){
     contrib[i, 1:length(activeTaus)] <- rmultinom(1, obs$obs[i], activeTaus)
   }
   contrib
+}
+
+
+
+# delta, gamma, P_dens, obs 
+# f: list of functions, namely:
+#    getInitialTheta
+#    buildDensity
+#    sampleTheta
+GibbsSampler <- function(m, obs, f, runs){
+  n <- length(obs$obs)
+  
+  # initialize uniformly 
+  theta <- f$getInitialTheta(m)
+  progress <- createProgress(m)
+  
+  for(n in 1:runs){
+    P_dens    <- f$buildDensity(theta$statePara)
+    hiddenStates <- sampleHiddenStates(theta, P_dens, obs)
+    theta <- f$sampleTheta(m, hiddenStates, obs, theta$delta, n)
+    
+    progress <- thetaToProgress(progress, theta, 0)
+    
+    # R complains if is.na is applied to a closure
+    if(suppressWarnings(!is.na(f$progressCallback))){
+      f$progressCallback(n, theta, progress, hiddenStates)
+    }
+  }
+  
+  list("theta" = theta, "progress" = progress)
 }

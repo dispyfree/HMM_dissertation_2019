@@ -1,0 +1,50 @@
+- there appear to be two kinds of foward-backwards probabilities! Which one to use?
+
+
+todo: implement FB (stochastic) sampling!
+
+
+- does it make sense to go for sequence alignment?
+
+
+TODO: photocopy \chi^2 derivation in Montgomery for Eric! 
+
+
+https://www.metoffice.gov.uk/research/climate/maps-and-data/data/haduk-grid/datasets
+https://data.open-power-system-data.org/weather_data/2019-04-09
+
+
+dataset absentiism:
+https://archive.ics.uci.edu/ml/datasets/Absenteeism+at+work
+
+
+nice source:
+https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations
+
+
+thesis: 
+- include graphics from ZUcchini?!
+- prevent label switching by reordering states if constraint not fulfilled any more 
+
+
+expectation:
+MH: chains are more sticky
+Gibbs: mixes quicker, less iterations, but each iteration more costly
+=> measure time as well
+
+
+=> produce quantitative versions (under which conditions, different # states, length of chains ...)
+# of iterations, # of computations
+
+
+=> use other, quantitative criteria for convergence diagnostics
+effective sample size metric/ESS/riemann sum as metric! (coda in R as package)
+
+
+SUPER COOL:
+https://daattali.com/shiny/ggExtra-ggMarginal-demo/
+
+
+How gibbs is special case of Metropolis hastings (explain in Thesis!)
+=> send Xavier the dissertation draft today!
+

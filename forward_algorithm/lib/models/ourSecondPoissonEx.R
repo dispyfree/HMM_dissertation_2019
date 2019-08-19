@@ -4,21 +4,21 @@ library(e1071)
 # use stationary distribution of transition matrix
 # 1 : sun, 0 : rain
 
-delta1 <- c(2, 1) / 3.0
-gamma1 <- matrix(c(1, 0, 0, 1), 
+delta1 <- c(0.5, 0.2) / 3.0
+gamma1 <- matrix(c(0.8, 0.2, 0.4, 0.6), 
                  nrow = 2, byrow = TRUE)
 P <- c(function(){
-    rpois(r, 1)
+    rpois(1, 4)
   },
   function(){
-    rpois(r, 2)
+    rpois(1, 7)
   }
 )
 
 P_density <- c(function(x){
-  dpois(x, 1)
+  dpois(x, 4)
 },
 function(x){
-  dpois(x, 2)
+  dpois(x, 7)
 }
 )

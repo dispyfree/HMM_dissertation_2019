@@ -15,7 +15,7 @@ getInitialTheta <- function(m){
        "gamma" = drawRandomGamma(m), # (1/m) in all components
        # parameterization of the states; for Bernoulli-model, this is just
        # p for each state. 
-       "statePara" = c(1, 5, 10))
+       "statePara" = c(1, 2, 3))
 }
 
 
@@ -37,21 +37,22 @@ GibbsSampler <- function(m, obs){
   # initialize uniformly 
   theta <- getInitialTheta(m)
   
-  runs <- 50
+  runs <- 100
   progress <- data.frame(delta1 = c(0), delta2 = c(0), delta3 = c(0), 
                          gamma11 = c(0), gamma12 = c(0), 
                          gamma21 = c(0), gamma22 = c(0),
                          tau1 = c(0), tau2 = c(0), tau3 = c(0), p = c(0)
   )
-  
+  hiddenStates <- NA
   for(n in 1:runs){
     P_dens    <- buildPoissonDensityFromTau(theta$statePara)
-    hiddenStates <- sampleHiddenStates(theta, P_dens, obs)
+    hiddenStates <- sampleHiddenStates(theta, P_dens, obs, hiddenStates)
     theta <- samplePoissonTheta(theta, m, hiddenStates, obs, theta$delta, n, theta$statePara)
     
     p <- estimLogProb(theta$delta, theta$gamma, P_dens, obs)$logSum
     progress <- thetaToProgress(progress, theta, d, p)
     print(n)
+    print(theta$gamma)
     print(theta$statePara)
     print(p)
     print('-----------------------------------------')
@@ -63,7 +64,7 @@ GibbsSampler <- function(m, obs){
 #lambdaSample <- read_csv("~/data/education/university/warwick/statistics/dissertation/programming/HMM_dissertation_2019/common/data/LambdaThousand.csv")
 #lambdaSample$time <- lambdaSample$X1 - 1
 
-T <- 1000
+T <- 500
 dat <- genMC(delta1, gamma1, P, P_density, T)
 
 ret <- GibbsSampler(3, dat)

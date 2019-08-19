@@ -38,6 +38,11 @@ genMC <- function(u, gamma, P, P_density, T){
   data.frame(states = states, obs = obs, prob = prob, time = times)
 }
 
+#shorthand 
+genMCByTheta <- function(theta, sampleSize){
+  genMC(theta$delta, theta$gamma, theta$R, theta$P_dens, sampleSize)
+}
+
 
 # generates dummy weather model
 # state 1: high pressure, state 2: low pressure
