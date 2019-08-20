@@ -116,7 +116,7 @@ logSum <- function(log_a){
 
 
 matPow <- function(mat, p){
-  assert(p >= 0)
+  testit::assert(p >= 0)
   if(p == 0){
     dims <- dim(mat)
     diag(dims[1])

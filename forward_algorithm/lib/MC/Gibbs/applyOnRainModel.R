@@ -27,7 +27,7 @@ ss <- 500
  f <- list("getInitialTheta" = getInitialBernoulliTheta, 
            "buildDensity"    = buildBernDensity,
            "sampleTheta"     = sampleBernoulliTheta,
-           "progressCallback" = function(n, theta, progress, hiddenStates){
+           "progressCallback" = function(n, theta, progress, hiddenStates, extra){
              
              d1 <- sum(abs((tail(hiddenStates, -1)) - rainySample$states))
              d2 <- sum(abs(f01((tail(hiddenStates, -1))) - rainySample$states))

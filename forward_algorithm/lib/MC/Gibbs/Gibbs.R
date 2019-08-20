@@ -73,81 +73,6 @@ getBackwardProbs <- function(alpha, gamma, nextState){
 }
 
 
-# estimates Gamma using the given estimate of hidden states
-# then updates it by means of weighted Dirichlet distribution
-sampleGamma <- function(m, hiddenStates, prior){
-  eGamma <- estimGamma(m, hiddenStates)
-  sample <- replicate(m, prior)
-  
-  # sample new transition probabilities
-  gamma <- matrix(rep.int(0, m*m), nrow = m)
-  for(i  in 1:m){
-    gamma[i, ] <- rdirichlet(1, 10 * (sample[i, ] +  eGamma[i, ]))
-  }
-  gamma 
-}
-
-
-# estimates gamma naiively by given chain of hiddenStates
-estimGamma <- function(m, hiddenStates){
-  trans <- matrix(rep.int(0, m*m), nrow = m)
-  
-  for(i in 1: (length(hiddenStates) - 1)){
-    j <- hiddenStates[i]
-    k <- hiddenStates[i+1]
-    trans[j, k] <- trans[j, k] + 1
-  }
-  # convert rows to probabilities
-  for(i in 1:m){
-    s <- sum(trans[i, ])
-    # if we did not observe state, set transitions uniformly
-    if(s == 0){
-      trans[i, ] <- rep.int(1.0/m, m)
-    }
-    else{
-      trans[i, ] <- trans[i, ] #/ sum(trans[i, ])
-    }
-  }
-  
-  trans
-}
-
-
-# simple estimates Bernoulli with the average of observations for each state
-sampleBernoulli <- function(m, hiddenStates, obs){
-  probs <- rep(0.0, m)
-  # the initial distribution doesn't have an attached observation
-  # and hence is disregarded when sampling Bernoulli variables 
-  t <- tail(hiddenStates, -1)
-  for(state in 1:m){
-    # extract relevant observations and their probabilities
-    regimes <- t == state
-
-    estimP <- sum(obs$obs[regimes]) / sum(regimes)
-    #using uniform prior, we can just use this estimate
-    probs[state] <- estimP
-  }
-  # enforce increasing ps
-  probs
-}
-
-# samples gamma, bernoulli and delta in one go
-sampleBernoulliTheta  <- function (m, hiddenStates, obs, oldDelta, noPriorRuns){
-  # uniform over all distributions
-  alphaPrior <- rep.int(1.0 / m, m)
-  
-  oldDelta <- oldDelta * noPriorRuns
-  oldDelta[hiddenStates[1]] <- oldDelta[hiddenStates[1]] + 1
-  oldDelta <- oldDelta / (noPriorRuns + 1)
-  list("gamma" = sampleGamma(m, hiddenStates, alphaPrior), 
-       "statePara" = sampleBernoulli(m, hiddenStates, obs),  #c(0.9, 0.3), 
-       "noRuns" = noPriorRuns + 1,
-       "delta" = oldDelta #c(1.0, 0.5) / 1.5
-       )
-}
-
-
-
 samplePoissonTheta  <- function (theta, m, hiddenStates, obs, oldDelta, noPriorRuns, taus){
   T <- length(obs$obs)
   # uniform over all distributions
@@ -220,9 +145,46 @@ GibbsSampler <- function(m, obs, f, runs){
     
     # R complains if is.na is applied to a closure
     if(suppressWarnings(!is.na(f$progressCallback))){
-      f$progressCallback(n, theta, progress, hiddenStates)
+      f$progressCallback(n, theta, progress, hiddenStates, list())
     }
   }
   
   list("theta" = theta, "progress" = progress)
+}
+
+
+# simple estimates Bernoulli with the average of observations for each state
+gibbs.sampleBernoulli <- function(m, hiddenStates, obs){
+  probs <- rep(0.0, m)
+  # the initial distribution doesn't have an attached observation
+  # and hence is disregarded when sampling Bernoulli variables 
+  t <- tail(hiddenStates, -1)
+  for(state in 1:m){
+    # extract relevant observations and their probabilities
+    regimes <- t == state
+    
+    estimP <- sum(obs$obs[regimes]) / sum(regimes)
+    #using uniform prior, we can just use this estimate
+    probs[state] <- estimP
+  }
+  # enforce increasing ps
+  probs
+}
+
+
+
+# samples gamma, bernoulli and delta in one go
+gibbs.sampleBernoulliTheta  <- function (m, hiddenStates, obs, oldDelta, noPriorRuns){
+  # uniform over all distributions
+  alphaPrior <- rep.int(1.0 / m, m)
+  
+  oldData <- theta$delta
+  oldDelta <- oldDelta * noPriorRuns
+  oldDelta[hiddenStates[1]] <- oldDelta[hiddenStates[1]] + 1
+  oldDelta <- oldDelta / (noPriorRuns + 1)
+  list("gamma" = sampleGamma(m, hiddenStates, alphaPrior), 
+       "statePara" = sampleBernoulli(m, hiddenStates, obs),  #c(0.9, 0.3), 
+       "noRuns" = noPriorRuns + 1,
+       "delta" = oldDelta #c(1.0, 0.5) / 1.5
+  )
 }

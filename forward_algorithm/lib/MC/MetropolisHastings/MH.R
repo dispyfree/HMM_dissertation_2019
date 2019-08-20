@@ -1,11 +1,12 @@
 library(tictoc)
-source('lib/MC/common/utility.R')
+library(testit)
+source('lib/MC/common/common.R')
 source('lib/estimLogProb.R')
 
 # samples gamma by altering with sample drawn from normal distribution
 # first draws _one_ row to alter; then alters _solely_ this row
 # always returns valid distributions
-sampleGamma <- function(gamma){
+mh.sampleGamma <- function(gamma){
   dims <- dim(gamma)
   n <- dims[1]
   sd <- 0.05
@@ -20,17 +21,57 @@ sampleGamma <- function(gamma){
 }
 
 
+# samples gamma, bernoulli and delta in one go
+mh.sampleBernoulliTheta  <- function (theta, obs, noPriorRuns){
+  m <- length(theta$delta)
+  # uniform over all distributions
+  alphaPrior <- rep(1.0 / m, m)
+  
+  list("gamma" = mh.sampleGamma(theta$gamma), 
+       "statePara" = mh.sampleBernoulli(theta$statePara), 
+       "noRuns" = noPriorRuns + 1,
+       "delta" = mh.sampleDelta(theta$delta) 
+  )
+}
+
+# samples by altering probs with normal distribution
+# always returns a valid distribution
+mh.sampleBernoulli <- function(probs){
+  sd <- 0.03
+  testit::assert(all(probs >= 0 & probs <= 1))
+  
+  m <- length(probs)
+  probs <- probs + rnorm(m, mean = 0, sd=sd)
+  
+  probs <- sapply(probs, normaliseTo01)
+  testit::assert(all(probs >= 0 & probs <= 1))
+  probs
+}
+
+
+mh.sampleDelta <- function(probs){
+  m <- length(probs)
+  sd <- 0.03
+  probs <- probs + rnorm(m, mean = 0, sd=sd)
+  
+  probs <- sapply(probs, normaliseTo01)
+  testit::assert(all(probs >= 0 & probs <= 1))
+  probs / sum(probs)
+}
+
+
 
 # delta, gamma, P_dens, obs 
-directMHSampler <- function(m, obs, theta, progress, sampleTheta, buildDensity, thetaToProgress){
+directMHSampler <- function(m, obs, f, runs){
   n <- length(obs$obs)
   
-  runs <- 400
+  theta <- f$getInitialTheta(m)
+  progress <- createProgress(m)
+  
   for(n in 1:runs){
-    tic()
-    newTheta <- sampleTheta(theta, obs)
-    newP_dens <- buildDensity(newTheta$statePara)
-    P_dens    <- buildDensity(theta$statePara)
+    newTheta <- f$sampleTheta(theta, obs, n)
+    newP_dens <- f$buildDensity(newTheta$statePara)
+    P_dens    <- f$buildDensity(theta$statePara)
     
     newProb <- estimTLogProb(newTheta, newP_dens, obs)
     oldProb <- estimTLogProb(theta, P_dens, obs)
@@ -39,16 +80,20 @@ directMHSampler <- function(m, obs, theta, progress, sampleTheta, buildDensity, 
     
     #accept
     if(log(runif(1)) <= alpha){
-      print('accepted!');
       theta <- newTheta
       progress <- thetaToProgress(progress, newTheta, TRUE)
     }else{
-      print('rejected!')
       progress <- thetaToProgress(progress, theta, FALSE)
     }
+    
+    # R complains if is.na is applied to a closure
+    if(suppressWarnings(!is.na(f$progressCallback))){
+      extra = list("newLogSum" = newProb$logSum)
+      f$progressCallback(n, theta, progress, hiddenStates, extra)
+    }
+    
     print(newProb$logSum)
     print(theta$statePara)
-    toc()
   }
   
   list("theta" = theta, "progress" = progress)
