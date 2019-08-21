@@ -6,11 +6,12 @@
 # contains the parameterisation of the entire model (hence \theta)
 # m is the number of states
 getInitialBernoulliTheta <- function(m){
-  list("delta" = rep(1.0/m, m),
-       "gamma" = drawRandomGamma(m), # (1/m) in all components
+  list("gamma" = drawRandomGamma(m), # (1/m) in all components
        # parameterization of the states; for Bernoulli-model, this is just
        # p for each state. 
-       "statePara" = runif(m))
+       "statePara" = runif(m),
+       noRuns = 0,
+       "delta" = rep(1.0/m, m))
 }
 
 

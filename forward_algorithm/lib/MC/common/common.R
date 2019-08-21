@@ -1,6 +1,7 @@
 library(ramify)
 
 source('lib/MC/common/Bernoulli.R')
+source('lib/MC/common/utility.R')
 
 # attaches current theta values to progress and returns progress
 thetaToProgress <- function(progress, theta, d){
@@ -13,6 +14,42 @@ thetaToProgress <- function(progress, theta, d){
   ))
   progress
 }
+
+
+# maps teach progress parameter (ie. everything except the first)
+# to its (0.25, 0.5, 0.75) quantiles.  
+# cuts the progress in three parts of equal size (1-n, n - 2n, 2n - 3n)
+# and computes the quantiles for each part, respectively 
+progressToQuantiles <- function(progress){
+  n <- dim(progress)[1]
+  chainSize <- floor(n / 3)
+  paramNo <- dim(progress)[2] - 1
+  quantilesToMeasure <- c(0.25, 0.5, 0.75)
+  
+  #stores quantiles for second/third part for each component, respectively
+  sq <- c()
+  tq <- c()
+  
+  for(compIndex in 2:paramNo){
+    #firs part discarded
+    #firstPart <- progress[1: chainSize, compIndex]
+    secondPart <- progress[chainSize: (2 * chainSize), compIndex]
+    thirdPart <- progress[(2 * chainSize): (3 * chainSize), compIndex]
+    
+    sq <- c(sq, quantile(secondPart, quantilesToMeasure, names = FALSE))
+    tq <- c(tq, quantile(thirdPart, quantilesToMeasure, names = FALSE))
+  }
+  
+  list("secondQuant" = sq, "thirdQuant" = tq)
+}
+
+
+# for use with @progressToQuantiles
+# extracts the maximum difference between respective components
+getMaxQuantDeviation <- function(p){
+  max(abs(p$secondQuant - p$thirdQuant))
+}
+
 
 
 # create a progress object for use with
@@ -99,31 +136,3 @@ drawRandomGamma <- function(m){
 }
 
 
-# resulting vector has values in [0, 1], obtained by shifting accordingly
-normaliseTo01 <- function(vec){
-  ret <- sapply(vec, function(entry){
-    if(entry < 0){
-      -entry;
-    }
-    else if(entry > 1){
-      1.0 - (entry - 1.0)
-    }
-    else{
-      entry
-    }});
-  ret
-}
-
-# resulting vector is shifted s.t. its components sum to zero. 
-normaliseToZeroSum <- function(vec){
-  vec <- vec - (sum(vec) / length(vec))
-  vec
-}
-
-# resulting vector has sum 1 and has values in [0, 1]
-normaliseTo01Sum1 <- function(vec){
-  l <- sum(abs(vec))
-  # for numerical stability, make sure |*| < 1
-  vec <- vec / (l * 1.001)
-  normaliseTo01(vec)
-}

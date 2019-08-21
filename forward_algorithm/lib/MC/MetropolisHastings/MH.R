@@ -9,14 +9,14 @@ source('lib/estimLogProb.R')
 mh.sampleGamma <- function(gamma){
   dims <- dim(gamma)
   n <- dims[1]
-  sd <- 0.05
+  sd <- 0.08
   oldGamma <- gamma
   
   rtu <- rdiscrete(1, rep.int(1, n) / n)
   
   # adding zeroSums retains the invariant \sum \gamma_{i,} = 1.0
-  gamma[rtu, ] <- gamma[rtu, ] + normaliseToZeroSum(rnorm(n, mean=0, sd=sd))
-  gamma[rtu, ] <- normaliseTo01Sum1(gamma[rtu, ])
+  gamma[rtu, ] <- normaliseToSum1(
+                bumpTo01OrKeep(gamma[rtu, ] + rnorm(n, mean=0, sd=sd), gamma[rtu, ]))
   gamma
 }
 
@@ -28,7 +28,8 @@ mh.sampleBernoulliTheta  <- function (theta, obs, noPriorRuns){
   alphaPrior <- rep(1.0 / m, m)
   
   list("gamma" = mh.sampleGamma(theta$gamma), 
-       "statePara" = mh.sampleBernoulli(theta$statePara), 
+       # sort to prevent label switching
+       "statePara" = sort(mh.sampleBernoulli(theta$statePara)), 
        "noRuns" = noPriorRuns + 1,
        "delta" = mh.sampleDelta(theta$delta) 
   )
@@ -37,13 +38,14 @@ mh.sampleBernoulliTheta  <- function (theta, obs, noPriorRuns){
 # samples by altering probs with normal distribution
 # always returns a valid distribution
 mh.sampleBernoulli <- function(probs){
-  sd <- 0.03
+  sd <- 0.08
   testit::assert(all(probs >= 0 & probs <= 1))
   
   m <- length(probs)
+  oldProbs <- probs
   probs <- probs + rnorm(m, mean = 0, sd=sd)
   
-  probs <- sapply(probs, normaliseTo01)
+  probs <- bumpTo01OrKeep(probs, oldProbs)
   testit::assert(all(probs >= 0 & probs <= 1))
   probs
 }
@@ -52,23 +54,28 @@ mh.sampleBernoulli <- function(probs){
 mh.sampleDelta <- function(probs){
   m <- length(probs)
   sd <- 0.03
+  oldProbs <- probs
   probs <- probs + rnorm(m, mean = 0, sd=sd)
   
-  probs <- sapply(probs, normaliseTo01)
+  probs <- normaliseToSum1(bumpTo01OrKeep(probs, oldProbs))
   testit::assert(all(probs >= 0 & probs <= 1))
-  probs / sum(probs)
+  probs
 }
 
 
 
 # delta, gamma, P_dens, obs 
-directMHSampler <- function(m, obs, f, runs){
+directMHSampler <- function(m, obs, f, convLimit){
   n <- length(obs$obs)
   
   theta <- f$getInitialTheta(m)
   progress <- createProgress(m)
   
-  for(n in 1:runs){
+  currentLimit <- 100
+  # do not update the currentLimit if chain has not at least 200 elements
+  minRuns <- 200
+  n <- 0
+  while(currentLimit > convLimit && n < f$maxRuns){
     newTheta <- f$sampleTheta(theta, obs, n)
     newP_dens <- f$buildDensity(newTheta$statePara)
     P_dens    <- f$buildDensity(theta$statePara)
@@ -79,7 +86,7 @@ directMHSampler <- function(m, obs, f, runs){
     alpha <- min(0, newProb$logSum - oldProb$logSum)
     
     #accept
-    if(log(runif(1)) <= alpha){
+    if(log(runif(1)) <= alpha ){
       theta <- newTheta
       progress <- thetaToProgress(progress, newTheta, TRUE)
     }else{
@@ -92,9 +99,28 @@ directMHSampler <- function(m, obs, f, runs){
       f$progressCallback(n, theta, progress, hiddenStates, extra)
     }
     
-    print(newProb$logSum)
-    print(theta$statePara)
+    # track progress of quantiles
+    if(n %% 10 == 0){
+      q <- progressToQuantiles(progress)
+      if(n == 10){
+        quantileProgress <- c(q$secondQuant, q$thirdQuant)
+      }
+      else if( n >= 20){
+        quantileProgress <- rbind(quantileProgress, q$secondQuant, q$thirdQuant)
+      }
+      mDev <- getMaxQuantDeviation(q)
+      
+      if(n > minRuns){
+        currentLimit <- mDev
+      }
+      print(mDev)
+      print(theta$statePara)  
+      print(theta$gamma)
+      
+    }
+    n <- n + 1
   }
   
-  list("theta" = theta, "progress" = progress)
+  list("theta" = theta, "progress" = progress, 
+       "quantileProgress" = quantileProgress)
 }

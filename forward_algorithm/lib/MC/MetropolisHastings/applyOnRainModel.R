@@ -2,7 +2,7 @@ library('readr')
 library(ggplot2)
 source('lib/MC/MetropolisHastings/MH.R')
 
-
+setwd("~/data/education/university/warwick/statistics/dissertation/programming/HMM_dissertation_2019/forward_algorithm")
 
 source('lib/models/rainModel.R')
 rainySample <- read_csv("~/data/education/university/warwick/statistics/dissertation/programming/HMM_dissertation_2019/common/rainySample.csv",
@@ -12,11 +12,11 @@ rainySample$time <- rainySample$time - 1
 f <- list("getInitialTheta" = getInitialBernoulliTheta, 
           "buildDensity"    = buildBernDensity,
           "sampleTheta"     = mh.sampleBernoulliTheta,
-          "progressCallback" = NA
+          "progressCallback" = NA,
+          "maxRuns" = 2000
           )
 
-runs <- 200
-ret <- directMHSampler(2, rainySample, f, runs)
+ret <- directMHSampler(2, rainySample[1:500,], f, 0.1)
 
 
 # ret$progress$time <- 1:length(ret$progress$p1)

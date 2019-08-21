@@ -17,28 +17,38 @@ sampleInitialDist <- function(delta){
 
 
 
-# resulting vector has sum 1 and has values in [0, 1]
-normaliseTo01Sum1 <- function(vec){
-  l <- sum(abs(vec))
-  # for numerical stability, make sure |*| < 1
-  vec <- vec / (l * 1.001)
-  normaliseTo01(vec)
+# tries to bump individual entries; if not possible, keep old entry
+bumpTo01OrKeep <- function(newVec, oldVec){
+  newVec <- bumpTo01(newVec)
+  newVec[is.na(newVec)] <- oldVec[is.na(newVec)]
+  newVec
+}
+
+# resulting vector has values in [0, 1], obtained by shifting accordingly
+bumpTo01 <- function(vec){
+  ret <- sapply(vec, function(entry){
+    # if it can't be bumped back, return NA
+    if(min(abs(entry - 0), abs(entry - 1)) > 1){
+      NA
+    }
+    else{
+      if(entry < 0){
+        -entry;
+      }
+      else if(entry > 1){
+        1.0 - (entry - 1.0)
+      }
+      else{
+        entry
+      }}});
 }
 
 
-# resulting vector has values in [0, 1], obtained by shifting accordingly
-normaliseTo01 <- function(vec){
-  ret <- sapply(vec, function(entry){
-    if(entry < 0){
-      -entry;
-    }
-    else if(entry > 1){
-      1.0 - (entry - 1.0)
-    }
-    else{
-      entry
-   }});
-  ret
+# resulting vector has sum 1 and has values in [0, 1]
+normaliseToSum1 <- function(vec){
+  l <- sum(abs(vec))
+  vec <- vec / l
+  vec
 }
 
 # resulting vector is shifted s.t. its components sum to zero. 
@@ -46,6 +56,24 @@ normaliseToZeroSum <- function(vec){
   vec <- vec - (sum(vec) / length(vec))
   vec
 }
+
+# resulting vector has sum 1 and has values in [0, 1]
+normaliseTo01Sum1 <- function(vec){
+  l <- sum(abs(vec))
+  vec <- vec / l
+  normaliseTo01(vec)
+}
+# resulting vector has values in [0, 1], obtained by shifting accordingly
+normaliseTo01 <- function(vec){
+  if(min(vec) < 0){
+    vec <- vec - min(vec)
+  }
+  else if(max(vec) > 1){
+    vec <- vec - (max(vec) - 1)
+  }
+  vec
+}
+
 
 
 # all entries are (1/m)
@@ -63,7 +91,7 @@ sampleBernoulliP <- function(probs){
   m <- length(probs)
   probs <- probs + rnorm(m, mean = 0, sd=sd)
   
-  probs <- sapply(probs, normaliseTo01)
+  probs <- sapply(probs, bumpTo01OrKeep)
   assert(all(probs >= 0 & probs <= 1))
   probs
 }

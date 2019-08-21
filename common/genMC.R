@@ -67,5 +67,5 @@ genMCByTheta <- function(theta, sampleSize){
 # }
 # )
 
-#sampleReal <- genMC(u1, gamma1, P, P_density, 100)
-#write.csv(sampleReal, file='rainySample.csv')
+sampleReal <- genMC(u1, gamma1, P, P_density, 2000)
+write.csv(sampleReal, file='rainySample.csv')
