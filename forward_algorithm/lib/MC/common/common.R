@@ -1,4 +1,5 @@
 library(ramify)
+library(testit)
 
 source('lib/MC/common/Bernoulli.R')
 source('lib/MC/common/utility.R')
@@ -133,6 +134,22 @@ estimGamma <- function(m, hiddenStates){
 drawRandomGamma <- function(m){
   gamma <- matrix(rep.int(1/m, m*m), ncol=m)
   gamma
+}
+
+
+# gets model needed for the given numbers of parameters to be estimated
+
+getRequiredModel <- function(paramsToEstimate){
+  assert(paramsToEstimate < 12)
+  assert(paramsToEstimate >=2)
+  
+  if(paramsToEstimate <= 6){
+    list("m" = 2, "paramsToEstimate" = paramsToEstimate,
+         "noFixedParams" = 6 - paramsToEstimate)
+  }else{
+    list("m" = 3, "paramsToEstimate" = paramsToEstimate,
+         "noFixedParams" = 12 - paramsToEstimate)
+  }
 }
 
 

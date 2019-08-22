@@ -1,11 +1,13 @@
 library(ggplot2)
 library(gridExtra)
 
+source('lib/MC/common/utility.R')
+
 dat <- data.frame(x = c(0), y = c(0))
 
-sigma <- 0.1
+sigma <- 0.04
 steps <- 200
-samples <- 200
+samples <- 500
 
 for(j in 1:samples){
   curXt <- runif(1, 0, 1)
@@ -18,18 +20,21 @@ for(j in 1:samples){
   for(i in 1:steps){
     dat <- rbind(dat, data.frame(x = curX, y = curY))
     
-    curX1 <- curX * exp(rnorm(1, mean =0, sd = sigma))
-    curY1 <- curY * exp(rnorm(1, mean = 0, sd = sigma))
+    #curX1 <- curX * exp(rnorm(1, mean =0, sd = sigma))
+    #curY1 <- curY * exp(rnorm(1, mean = 0, sd = sigma))
+    curX1 <- bumpTo01OrKeep(curX + rnorm(1, mean = 0, sd=sigma), curX)
+    curY1 <- bumpTo01OrKeep(curY + rnorm(1, mean = 0, sd=sigma), curY)
     
     
     #tentative solution
-    curXt <- curX1 / (curX1 + curY1)
-    curYt <- curY1 / (curX1 + curY1)
-     if(runif(1) <= (curXt / curX) * (curYt / curY) *
-        correctF(curXt) * (exp(-curXt + curX - curYt + curY))){
-       curX <- curXt
-       curY <- curYt
-     }
+    curX <- curX1 / (curX1 + curY1)
+    curY <- curY1 / (curX1 + curY1)
+     # if(runif(1) <= (curXt / curX) * (curYt / curY) ){
+     #    #correctF(curXt) * (exp(-curXt + curX - curYt + curY))){
+     #    #(exp(-curXt + curX - curYt + curY))){
+     #   curX <- curXt
+     #   curY <- curYt
+     # }
   }
 }
 
@@ -61,22 +66,23 @@ frequencies <- h$counts / sum(h$counts)
 # https://datascienceplus.com/fitting-polynomial-regression-r/
 
 # fit polynomial to invert
-m <- lm(frequencies ~ points + I(points^2) + I(points^3))
+m <- lm(frequencies ~ points + I(points^2))
 
-f <- function(x){
-  0.028 + 0.13 * x - 0.1301 * x^2
+estimDensity <- function(x){
+  0.04  + 0.07 * x - 0.07 *x^2
 }
 
 ggplot() + 
-  geom_line(aes(x = points, y = f(points)), color= 'darkblue') +
+  geom_line(aes(x = points, y = estimDensity(points)), color= 'darkblue') +
+  geom_line(aes(x = points, y = frequencies), color = 'darkred') +
   xlab('x/y') + 
   ylab('estimated frequency') +
   ggtitle('estimating frequencies from histogram')
 
-plot(points, f(points))
 
 maxP <- max(f(points))
 
 correctF <- function(x){
-  maxP / f(x)
+  maxP / estimDensity(x)
 }
+

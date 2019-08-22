@@ -1,0 +1,21 @@
+\subsection{Gradual increase of model complexity}
+
+Let us shortly consider the increase of model complexity as a function of $m$, the number of states. There are $m^2$ parameters to be estimated for $\Gamma$, and $m$ parameters, one for each state's distribution. Let us neglect $\delta$ in this argument, as 
+it quickly becomes insignificant as the sample size increases.
+
+This means that for $m=2$, we have $6$ parameters to estimate and for $m=3$, this number rises already to $12$. We observe that for $m=2$, convergence is reached quite fast with our vanilla implementation. However, for $m=3$ the picture is markedly different: the number of iterations needed for convergence becomes infeasibly large.
+ 
+We suspect that complexity rises exponentially in the number of parameters to estimate. If this is indeed the case, $m=2$ and $m=3$, or $6$ and $12$ parameters respectively, are indeed extremely different in terms of computational complexity. Hence, we need to find a means to analyse complexity in a more fine-grained manner. 
+
+
+An obvious approach to do so is to fix a number of parameters and only estimate the remaining parameters.  In the following, we suggest a simple scheme. 
+
+
+\subsubsection{Fixing Parameters}
+To simplify the modifications to our model, we restrict ourselves to fix only the most important parameters. Those are, by construction, the diagonal of $\Gamma$ as well as the states' parameters $\lambda$. 
+
+When fixing parameters, we first fix elements on the diagonal of $\Gamma$; after having fixed $m$ parameters, we continue to fix parameters in $\lambda$ in increasing order. Hence, if $1$ parameter is fixed, only $\Gamma_{1,1}$ is fixed. If we fix $k=5$ parameters in a $m=3$ model, we fix $\Gamma_{i, i}$ for $1 \leq i \leq 3$ as well as $\lambda_1, \lambda_2$.
+
+When talking about a model with a complexity of $l$ parameters, we choose the model of lowest complexity which requires at least $l$ parameters to be estimated and fix all the remaining parameters. For instance,  if we would like a model of $4$ parameters, we will choose $m=2$; this model has $6$ parameters, of which we will fix $2$. 
+
+Our hope is that by introducing this scheme, we are able to analyse the increase of complexity in a more fine-grained way. 

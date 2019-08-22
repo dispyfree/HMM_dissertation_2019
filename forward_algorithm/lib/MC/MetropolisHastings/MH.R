@@ -6,7 +6,7 @@ source('lib/estimLogProb.R')
 # samples gamma by altering with sample drawn from normal distribution
 # first draws _one_ row to alter; then alters _solely_ this row
 # always returns valid distributions
-mh.sampleGamma <- function(gamma){
+mh.sampleGamma <- function(gamma, f){
   dims <- dim(gamma)
   n <- dims[1]
   sd <- 0.08
@@ -14,22 +14,39 @@ mh.sampleGamma <- function(gamma){
   
   rtu <- rdiscrete(1, rep.int(1, n) / n)
   
+  #noFixedParameters
+  nfp <- min(n, f$noFixedParams)
+  
   # adding zeroSums retains the invariant \sum \gamma_{i,} = 1.0
-  gamma[rtu, ] <- normaliseToSum1(
-                bumpTo01OrKeep(gamma[rtu, ] + rnorm(n, mean=0, sd=sd), gamma[rtu, ]))
+  # no fixing needed
+  if(nfp < rtu){
+    prop <- bumpTo01OrKeep(gamma[rtu, ] + rnorm(n, mean=0, sd=sd), gamma[rtu, ])
+    gamma[rtu, ] <- normaliseToSum1(prop)
+  }
+  else{
+    # draw all the other numbers
+    step <- rnorm(n, mean=0, sd=sd)
+    prop <- bumpTo01OrKeep(gamma[rtu, ] + step, gamma[rtu, ])
+    prop[rtu] <- f$origTheta$gamma[rtu, rtu]
+    # normalise the remainder so that they take up (1-prop[rtu]) of probability
+    prop[-rtu] <- normaliseToSum1(prop[-rtu]) * (1 - prop[rtu])
+    gamma[rtu, ] <- prop
+  }
+  diag(gamma)[1:nfp] <- diag(f$origTheta$gamma)[1:nfp]
+    
   gamma
 }
 
 
 # samples gamma, bernoulli and delta in one go
-mh.sampleBernoulliTheta  <- function (theta, obs, noPriorRuns){
+mh.sampleBernoulliTheta  <- function (theta, obs, noPriorRuns, f){
   m <- length(theta$delta)
   # uniform over all distributions
   alphaPrior <- rep(1.0 / m, m)
-  
-  list("gamma" = mh.sampleGamma(theta$gamma), 
+  mh.sampleGamma(theta$gamma, f)
+  list("gamma" = mh.sampleGamma(theta$gamma, f), 
        # sort to prevent label switching
-       "statePara" = sort(mh.sampleBernoulli(theta$statePara)), 
+       "statePara" = sort(mh.sampleBernoulli(theta$statePara, f)), 
        "noRuns" = noPriorRuns + 1,
        "delta" = mh.sampleDelta(theta$delta) 
   )
@@ -37,13 +54,20 @@ mh.sampleBernoulliTheta  <- function (theta, obs, noPriorRuns){
 
 # samples by altering probs with normal distribution
 # always returns a valid distribution
-mh.sampleBernoulli <- function(probs){
-  sd <- 0.08
+mh.sampleBernoulli <- function(probs, f){
+  sd <- 0.1
   testit::assert(all(probs >= 0 & probs <= 1))
   
   m <- length(probs)
   oldProbs <- probs
+  
   probs <- probs + rnorm(m, mean = 0, sd=sd)
+  
+  #noFixedParameters
+  nfp <- f$noFixedParams - m
+  if(nfp > 0){
+    probs[1:nfp] <- f$origTheta$statePara[1:nfp]
+  }
   
   probs <- bumpTo01OrKeep(probs, oldProbs)
   testit::assert(all(probs >= 0 & probs <= 1))
@@ -76,7 +100,7 @@ directMHSampler <- function(m, obs, f, convLimit){
   minRuns <- 200
   n <- 0
   while(currentLimit > convLimit && n < f$maxRuns){
-    newTheta <- f$sampleTheta(theta, obs, n)
+    newTheta <- f$sampleTheta(theta, obs, n, f)
     newP_dens <- f$buildDensity(newTheta$statePara)
     P_dens    <- f$buildDensity(theta$statePara)
     
@@ -103,19 +127,17 @@ directMHSampler <- function(m, obs, f, convLimit){
     if(n %% 10 == 0){
       q <- progressToQuantiles(progress)
       if(n == 10){
-        quantileProgress <- c(q$secondQuant, q$thirdQuant)
+        quantileProgress <- cbind(q$secondQuant, q$thirdQuant)
       }
       else if( n >= 20){
-        quantileProgress <- rbind(quantileProgress, q$secondQuant, q$thirdQuant)
+        quantileProgress <- rbind(quantileProgress, cbind(q$secondQuant, q$thirdQuant))
       }
       mDev <- getMaxQuantDeviation(q)
+      print(mDev)
       
       if(n > minRuns){
         currentLimit <- mDev
       }
-      print(mDev)
-      print(theta$statePara)  
-      print(theta$gamma)
       
     }
     n <- n + 1

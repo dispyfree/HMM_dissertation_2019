@@ -28,4 +28,6 @@ function(x){
 }
 )
 
+lambda <- c(0.9, 0.3)
+
 estimatedHiddenStateDist <- u1[1] * 0.1 + u1[2] * 0.3 

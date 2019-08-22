@@ -315,3 +315,37 @@ Note that this simple, approximative method can be used for arbitrary sampling m
 
 Note also that combining the aforementioned projection method (i.e. dividing by the sum to achieve a sum to $1$) does not yield uniform results, even when applied to samples which are sampled using the ''bumping'' method. As shown above, this method generates uniformly distributed values - which are not uniform after having undergone said transformation. 
 
+
+
+\subsection{Final Implementation}
+
+The final implementation uses the follwing set of parameters:
+\begin{itemize}
+	\item \textbf{Bernoulli probabilities}:\\
+		Proposal $\mathcal{N}\left( p, \sigma = 0.1 \right)$
+	\item \textbf{Gamma probabilities}:
+		\begin{enumerate}
+			\item select row to update uniformly
+			\item apply Proposal $\mathcal{N}\left( \Gamma_{i,j}, \sigma = 0.08 \right)$
+			\item normalize sum of 1 by Cappé's method
+		\end{enumerate}
+	\item \textbf{$\delta$ probabilities}:
+		\begin{enumerate}
+			\item apply Proposal $\mathcal{N}\left( \delta_i, \sigma = 0.03 \right)$
+			\item normalize sum of 1 by Cappé's method
+		\end{enumerate}
+\end{itemize}
+
+\begin{figure}
+	\includegraphics[width=\linewidth]{img/impl_very_sticky_no_thinning.png}
+	\caption{Chain is very sticky due to low acceptance ratio}
+	\label{fig:sticky_chain_is_okay}
+\end{figure} 
+
+All parameters are ''bumped back'' with the ''Bumping method'' as described above. The parameters have been manually tweaked to yield an acceptance ratio of $0.23$\footnote{this acceptance ratio is commonly considered to be optimal for high-dimensional Monte Carlo chains} for a model with $m=2$ states, i.e. $6$ parameters. 
+
+A sample chain with this configuration is shown in \ref{fig:sticky_chain_is_okay}. Note that because of the very low acceptance ratio, the chain is quite ''sticky'' (i.e.: highly autocorrelated). This can be alleviated by applying a technique called \textit{thinning}, which is simply leaving out every xth element of the chain. As the focus of this dissertation focuses on the runtime complexity of the algorithm, we do not use thinning. 
+
+Note that the comparatively high standard deviation of our proposals (which are due to the low accetance rate sought) leads to high jumps in the empirical distribution function. Hence, the criterion developed in chapter \ref{chap:stationarity} needs to be modified; practical experiments have shown that a threshold of $0.1$ for the maximum differences between quanties of the empirical distribution function yields reasonable results. 
+
+

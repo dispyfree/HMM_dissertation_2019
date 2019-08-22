@@ -1,4 +1,5 @@
 library(lambda.tools)
+library(gtools)
 
 # generates a number of weights to be used with rdirichlet
 # pom point of mass, index deciding where most of the probability mass lies
