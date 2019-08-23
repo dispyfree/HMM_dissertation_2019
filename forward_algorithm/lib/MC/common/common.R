@@ -140,8 +140,8 @@ drawRandomGamma <- function(m){
 # gets model needed for the given numbers of parameters to be estimated
 
 getRequiredModel <- function(paramsToEstimate){
-  assert(paramsToEstimate < 12)
-  assert(paramsToEstimate >=2)
+  testit::assert(paramsToEstimate < 12)
+  testit::assert(paramsToEstimate >=2)
   
   if(paramsToEstimate <= 6){
     list("m" = 2, "paramsToEstimate" = paramsToEstimate,

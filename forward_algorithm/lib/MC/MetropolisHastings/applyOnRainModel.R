@@ -10,13 +10,14 @@ rainySample <- read_csv("~/data/education/university/warwick/statistics/disserta
                         col_names = c('time', 'states', 'obs', 'prob'), skip = 1)
 rainySample$time <- rainySample$time - 1
 
-parms <- getRequiredModel(7)
+#parms <- getRequiredModel(3)
 f <- list("getInitialTheta" = getInitialBernoulliTheta, 
           "buildDensity"    = buildBernDensity,
           "sampleTheta"     = mh.sampleBernoulliTheta,
           "progressCallback" = NA,
           "maxRuns" = 500,
-          "noFixedParams" = parms$noFixedParams,
+          "thinningFactor" = 5, 
+          "noFixedParams" = 0, #parms$noFixedParams,
           "origTheta" = list(
             "delta" = u1,
             "gamma" = gamma1,
@@ -26,7 +27,7 @@ f <- list("getInitialTheta" = getInitialBernoulliTheta,
           )
 
 
-ret <- directMHSampler(2, rainySample[1:500,], f, 0.1)
+ret <- directMHSampler(2, rainySample[1:500,], f, 0.05)
 
 
 # ret$progress$time <- 1:length(ret$progress$p1)

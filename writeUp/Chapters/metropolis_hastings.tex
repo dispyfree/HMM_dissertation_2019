@@ -236,7 +236,7 @@ where $X \sim \mathcal{N}(0, \sigma)$.
 	 	&= \int_{log(y)} \frac{1}{\sqrt{2 \pi \sigma}} e^{- \frac{ \left(exp(x) - 0\right)^2}{2 \sigma^2}} exp(x) \, dx
 	 \end{align*} 
 	 
-	 This means that when manipulating $p$ in log-space, the acceptance ratio needs to be altered as follows\footnote{Note that this also implies that $0$ must not be part of the domain of $p$. }:
+	 This means that when manipulating $p$ in log-space, the acceptance rate needs to be altered as follows\footnote{Note that this also implies that $0$ must not be part of the domain of $p$. }:
 	 \[
 	 	\alpha := min \Bigg\{ 
 	 		1, \frac{\tip{\tilde{\Theta}}}{\tip{\Theta}} \, \frac{\tilde{p}}{p}
@@ -348,4 +348,26 @@ A sample chain with this configuration is shown in \ref{fig:sticky_chain_is_okay
 
 Note that the comparatively high standard deviation of our proposals (which are due to the low accetance rate sought) leads to high jumps in the empirical distribution function. Hence, the criterion developed in chapter \ref{chap:stationarity} needs to be modified; practical experiments have shown that a threshold of $0.1$ for the maximum differences between quanties of the empirical distribution function yields reasonable results. 
 
+
+\subsubsection{Adjusting $\sigma$}
+When using Metropolis Hastings as sampling method, the choice of $\sigma$ governs the acceptance rate. It is commonly known that for high dimensions, $0.23$ is the ideal acceptance rate. If $\sigma$ is chosen too small, the acceptance rate will be too high; conversely, if $\sigma$ is too big, the acceptance rate will be lower. 
+
+Especially as the complexity of the model increases, lower $\sigma$ are in order\footnote{To understand why, consider an $m$-dimensional standard normal random variable with identity as the covariance matrix. If we consider any point at a fixed distance $d$ from the mean, the density at this point will decrease as $m$ increases, keeping $d$ fixed. $d$ can be thought of as a proxy for $\sigma$, so a Metropolis Hastings algorithm will produce less likely samples for the same $\sigma$ as $m$ increases. }. We use the following very simple scheme to adjust $\sigma$:
+
+ \codeBox{Adjustment of $\sigma$}{
+ 	\begin{algorithmic}
+ 	\State $f \gets 1.0$
+ 	\While{algorithm is running}
+ 		\If{\text{acceptanceRate} < 0.23}
+ 			\State $f \gets \frac{f}{1.01}$
+ 		\ElsIf{\text{acceptanceRate} > 0.23}
+ 			\State $f \gets f \, 1.01$
+ 		\Else
+ 		\State $\sigma \gets \sigma \, f$
+ 		\EndIf
+ 	\EndWhile
+ \end{algorithmic}
+ }
+The $\sigma$ for sampling $\delta, \Gamma  $ and $\lambda$ are tuned manually; their respective magnitudes are retained as the algorithm above makes adjustments as all $\sigma$ are scaled by the same factor $f$. 
+ 
 
