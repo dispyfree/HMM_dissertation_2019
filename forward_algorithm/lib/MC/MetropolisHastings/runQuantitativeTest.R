@@ -31,14 +31,14 @@ for(noParams in noParamsToEstimate){
   
   for(ss in sampleSizes){
     for(run in 1:noModelsEachSize){
-      cat('noParams: ', noParams, ' sample size:', ss, ' run: ', run)
+      print(paste0('noParams: ', noParams, ' sample size:', ss, ' run: ', run))
       
       model <- generateBernoulliModel(parms$m)
       f <- list("getInitialTheta" = getInitialBernoulliTheta, 
                 "buildDensity"    = buildBernDensity,
                 "sampleTheta"     = mh.sampleBernoulliTheta,
                 "progressCallback" = NA,
-                "maxRuns" = 3000,
+                "maxRuns" = 1000,
                 "thinningFactor" = 1, 
                 "noFixedParams" = parms$noFixedParams,
                 "origTheta" = list(
@@ -54,7 +54,7 @@ for(noParams in noParamsToEstimate){
       for(modelRun in 1:runsPerModel){
         tic()
         
-        ret <- directMHSampler(parms$m, data, f, 0.05)
+        ret <- directMHSampler(parms$m, data, f, 0.01)
         
         timer <- toc(quiet=TRUE)
         

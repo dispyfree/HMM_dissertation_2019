@@ -119,7 +119,17 @@ directMHSampler <- function(m, obs, f, convLimit){
   # do not update the currentLimit if chain has not at least 200 elements
   minRuns <- 200
   n <- 0
-  while(currentLimit > convLimit && n < f$maxRuns){
+  minConvLimit <- convLimit
+  sdFacs <- c()
+  convLimits <- c()
+  deviations <- c()
+  while(currentLimit > minConvLimit && n < f$maxRuns){
+    minConvLimit <- min(convLimit * sdFac, convLimit)
+    print(paste0(sdFac))
+    
+    sdFacs <- c(sdFacs, sdFac)
+    convLimits <- c(convLimits, minConvLimit)
+    
     newTheta <- f$sampleTheta(theta, obs, n, f, sdFac)
     newP_dens <- f$buildDensity(newTheta$statePara)
     P_dens    <- f$buildDensity(theta$statePara)
@@ -149,13 +159,14 @@ directMHSampler <- function(m, obs, f, convLimit){
     if(n %% 20 == 0){
       q <- progressToQuantiles(progress)
       if(n == 20){
-        quantileProgress <- cbind(q$secondQuant, q$thirdQuant)
+        quantileProgress <- c(q$secondQuant, q$thirdQuant)
       }
       else if( n >= 20){
-        quantileProgress <- rbind(quantileProgress, cbind(q$secondQuant, q$thirdQuant))
+        quantileProgress <- rbind(quantileProgress, c(q$secondQuant, q$thirdQuant))
       }
       mDev <- getMaxQuantDeviation(q)
-      print(mDev)
+      deviations <- c(deviations, mDev)
+      print(paste0(mDev, ' (<', minConvLimit, ')'))
       
       if(n > minRuns){
         currentLimit <- mDev
@@ -171,5 +182,8 @@ directMHSampler <- function(m, obs, f, convLimit){
   }
   
   list("theta" = theta, "progress" = progress, 
-       "quantileProgress" = quantileProgress)
+       "quantileProgress" = quantileProgress, 
+       "sdFacs" = sdFacs, "convLimits" = convLimits, 
+       "deviations" = deviations
+       )
 }
