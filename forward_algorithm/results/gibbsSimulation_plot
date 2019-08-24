@@ -1,0 +1,8 @@
+gibbs$noParmsToEstim <- as.factor(gibbs$noParmsToEstim)
+ggplot(gibbs, aes(x=noParmsToEstim, group =c(noParmsToEstim, modelRun), y= log(timeSpent))) + geom_boxplot() + ggtitle('time spent in log(seconds) for Bernoulli model') + xlab('# parameters to estimate') + ylab('log(time)')
+
+
+aggregated <- aggregate(gibbs$timeSpent, by = list(gibbs$noParmsToEstim, gibbs$run), FUN=sd)
+aggregated$noParmsToEstim <- aggregated$Group.1
+ggplot(aggregated, aes(x=noParmsToEstim, y= x)) + geom_boxplot() + ggtitle('variance of execution times (in s) within runs of one model') + xlab('# parameters to estimate') + ylab('time')
+

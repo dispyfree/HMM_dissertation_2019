@@ -12,6 +12,7 @@ The aim of the algorithms developed throughout this dissertation is to draw infe
 
 
 
+
 \section{Definition}
 
 
@@ -50,6 +51,23 @@ The dependencies can easily be visualised in the following way:
 \caption{Graph of dependencies within an HMM; figure as featured in Zucchini}
 \end{figure}
 Here, each circle represents a random variable and each arrow a conditional dependency. In particular, each variable is conditionally independent of all other variables, if it is conditioned on the variable it is connected to in this graph. 
+
+
+\section{Aim}
+The aim of this dissertation is to compare two MCMC algorithms used to estimate the parameters of an HMM; namely Metropolis Hastings and Gibb's Sampler. We seek to practically compare both algorithms rather than employ theory to argue about their respective advantages. In particular, we are interested in the dependency of the requried number of iterations and running time on the complexity of the model as well as the sample size. 
+
+Although there is an abundance of research on both Metropolis Hastings and Gibb's sampler, there is a lack of direct comparisons of both methods. However, related comparisons have been drawn; for instance Ryden\cite{ryden} compared the EM algorithm with MCMC methods. 
+
+For instance, would like to empirically answer the following questions:
+\begin{itemize}
+	\item How many samples does one need to reliably estimate a model of a given complexity?
+	\item Which algorithm converges faster towards the true model?
+	\item How does runtime depend on the model complexity?
+	\item Do both algorithms produce chains of comparable quality?
+\end{itemize}
+
+Note that due to time constraints it is beyond the scope of this thesis to compare the state-of-the-art for both algorithms - implementing the state-of-the-art itself would be an undertaking worth of a dissertation. Rather, this dissertation compares both algorithms on a more foundational basis, which is unlikely to fundamentally change when algorithms are tweaked to achieve state-of-the-art performance. 
+
 
 
 \section{Stationarity}

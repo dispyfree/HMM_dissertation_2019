@@ -25,13 +25,13 @@ generateBernoulliModel <- function(m){
   ps <- runif(m)
   R <- lapply(1:m, function(i){
     function(){
-      rdiscrete(1, c(ps[i], 1-ps[i]), c(1, 0))
+      rdiscrete(1, c(ps[i], 1-ps[i]), values = c(1, 0))
     }
   })
   
   P_dens <- lapply(1:m, function(i){
     function(x){
-      ddiscrete(x, c(ps[i], 1-ps[i]), c(1, 0))
+      ddiscrete(x, c(ps[i], 1-ps[i]), values = c(1, 0))
     }
   })
   

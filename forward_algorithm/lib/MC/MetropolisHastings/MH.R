@@ -9,31 +9,35 @@ source('lib/estimLogProb.R')
 mh.sampleGamma <- function(gamma, f, sdFac){
   dims <- dim(gamma)
   n <- dims[1]
-  sd <- 0.08 * sdFac
+  sd <- 0.03 * sdFac
   oldGamma <- gamma
   
-  rtu <- rdiscrete(1, rep.int(1, n) / n)
+  #rtu <- rdiscrete(1, rep.int(1, n) / n)
   
   #noFixedParameters
   nfp <- min(n, f$noFixedParams)
   
-  # adding zeroSums retains the invariant \sum \gamma_{i,} = 1.0
-  # no fixing needed
-  if(nfp < rtu){
-    prop <- bumpTo01OrKeep(gamma[rtu, ] + rnorm(n, mean=0, sd=sd), gamma[rtu, ])
-    gamma[rtu, ] <- normaliseToSum1(prop)
+  for(rtu in 1:n){
+    # adding zeroSums retains the invariant \sum \gamma_{i,} = 1.0
+    # no fixing needed
+    if(nfp < rtu){
+      prop <- bumpTo01OrKeep(gamma[rtu, ] + rnorm(n, mean=0, sd=sd), gamma[rtu, ])
+      gamma[rtu, ] <- normaliseToSum1(prop)
+    }
+    else{
+      # draw all the other numbers
+      step <- rnorm(n, mean=0, sd=sd)
+      prop <- bumpTo01OrKeep(gamma[rtu, ] + step, gamma[rtu, ])
+      prop[rtu] <- f$origTheta$gamma[rtu, rtu]
+      # normalise the remainder so that they take up (1-prop[rtu]) of probability
+      prop[-rtu] <- normaliseToSum1(prop[-rtu]) * (1 - prop[rtu])
+      gamma[rtu, ] <- prop
+    }
   }
-  else{
-    # draw all the other numbers
-    step <- rnorm(n, mean=0, sd=sd)
-    prop <- bumpTo01OrKeep(gamma[rtu, ] + step, gamma[rtu, ])
-    prop[rtu] <- f$origTheta$gamma[rtu, rtu]
-    # normalise the remainder so that they take up (1-prop[rtu]) of probability
-    prop[-rtu] <- normaliseToSum1(prop[-rtu]) * (1 - prop[rtu])
-    gamma[rtu, ] <- prop
+  if(nfp >= 1){
+    diag(gamma)[1:nfp] <- diag(f$origTheta$gamma)[1:nfp]
   }
-  diag(gamma)[1:nfp] <- diag(f$origTheta$gamma)[1:nfp]
-    
+  
   gamma
 }
 
@@ -45,7 +49,7 @@ mh.sampleBernoulliTheta  <- function (theta, obs, noPriorRuns, f, sdFac){
   alphaPrior <- rep(1.0 / m, m)
   list("gamma" = mh.sampleGamma(theta$gamma, f, sdFac), 
        # sort to prevent label switching
-       "statePara" = sort(mh.sampleBernoulli(theta$statePara, f, sdFac)), 
+       "statePara" = mh.sampleBernoulli(theta$statePara, f, sdFac), 
        "noRuns" = noPriorRuns + 1,
        "delta" = mh.sampleDelta(theta$delta, sdFac) 
   )
@@ -54,20 +58,20 @@ mh.sampleBernoulliTheta  <- function (theta, obs, noPriorRuns, f, sdFac){
 # samples by altering probs with normal distribution
 # always returns a valid distribution
 mh.sampleBernoulli <- function(probs, f, sdFac){
-  sd <- 0.1 * sdFac
+  sd <- 0.03 * sdFac
   testit::assert(all(probs >= 0 & probs <= 1))
-  
+
   m <- length(probs)
   oldProbs <- probs
-  
+
   probs <- probs + rnorm(m, mean = 0, sd=sd)
-  
+
   #noFixedParameters
   nfp <- f$noFixedParams - m
   if(nfp > 0){
     probs[1:nfp] <- f$origTheta$statePara[1:nfp]
   }
-  
+
   probs <- bumpTo01OrKeep(probs, oldProbs)
   testit::assert(all(probs >= 0 & probs <= 1))
   probs
@@ -123,9 +127,8 @@ directMHSampler <- function(m, obs, f, convLimit){
   sdFacs <- c()
   convLimits <- c()
   deviations <- c()
-  while(currentLimit > minConvLimit && n < f$maxRuns){
+  while(n < minRuns || (currentLimit > minConvLimit && n < f$maxRuns)){
     minConvLimit <- min(convLimit * sdFac, convLimit)
-    print(paste0(sdFac))
     
     sdFacs <- c(sdFacs, sdFac)
     convLimits <- c(convLimits, minConvLimit)
@@ -157,7 +160,7 @@ directMHSampler <- function(m, obs, f, convLimit){
     
     # track progress of quantiles
     if(n %% 20 == 0){
-      q <- progressToQuantiles(progress)
+      q <- progressToQuantiles(progress, m)
       if(n == 20){
         quantileProgress <- c(q$secondQuant, q$thirdQuant)
       }
@@ -185,5 +188,5 @@ directMHSampler <- function(m, obs, f, convLimit){
        "quantileProgress" = quantileProgress, 
        "sdFacs" = sdFacs, "convLimits" = convLimits, 
        "deviations" = deviations
-       )
+  )
 }

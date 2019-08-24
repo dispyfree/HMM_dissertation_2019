@@ -1,7 +1,10 @@
+
+setwd("~/data/education/university/warwick/statistics/dissertation/programming/HMM_dissertation_2019/forward_algorithm")
 library('readr')
 source('lib/MC/Gibbs/Gibbs.R')
-source('lib/MC/Gibbs/common.R')
-source('../common/genMC.R')
+source('lib/MC/common/common.R')
+source('lib/MC/common/Bernoulli.R')
+#source('../common/genMC.R')
 library(ggplot2)
 library(grid)
 library(ggExtra)
@@ -21,12 +24,18 @@ f01 <- function(x){
 
  runs <- 30
 ss <- 500 
- model <- generateBernoulliModel(2)
- data <- genMCByTheta(model, ss)
  
  f <- list("getInitialTheta" = getInitialBernoulliTheta, 
            "buildDensity"    = buildBernDensity,
-           "sampleTheta"     = sampleBernoulliTheta,
+           "sampleTheta"     = gibbs.sampleBernoulliTheta,
+           "noFixedParams" = 0,
+           "maxRuns" = 100,
+           "origTheta" = list(
+             "delta" = u1,
+             "gamma" = gamma1,
+             "statePara" = lambda,
+             "P_dens" = P_density
+           ),
            "progressCallback" = function(n, theta, progress, hiddenStates, extra){
              
              d1 <- sum(abs((tail(hiddenStates, -1)) - rainySample$states))
@@ -40,7 +49,7 @@ ss <- 500
  
  
 # GibbsSampler(2, data, f, runs)
-ret <- GibbsSampler(2, rainySample, f, runs)
+ret <- GibbsSampler(2, rainySample, f, 0.05)
 
 # indices <- 1:length(ret$progress$p1)
 # plot(indices, ret$progress$p1, col='red', type='l')

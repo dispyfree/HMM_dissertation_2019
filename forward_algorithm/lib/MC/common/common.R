@@ -21,7 +21,8 @@ thetaToProgress <- function(progress, theta, d){
 # to its (0.25, 0.5, 0.75) quantiles.  
 # cuts the progress in three parts of equal size (1-n, n - 2n, 2n - 3n)
 # and computes the quantiles for each part, respectively 
-progressToQuantiles <- function(progress){
+# ignore d and delta (because for long chain sizes, delta is not reliably estimable)
+progressToQuantiles <- function(progress, m){
   n <- dim(progress)[1]
   chainSize <- floor(n / 3)
   paramNo <- dim(progress)[2] - 1
@@ -31,7 +32,7 @@ progressToQuantiles <- function(progress){
   sq <- c()
   tq <- c()
   
-  for(compIndex in 2:paramNo){
+  for(compIndex in ((1+m)+1):paramNo){
     #firs part discarded
     #firstPart <- progress[1: chainSize, compIndex]
     secondPart <- progress[chainSize: (2 * chainSize), compIndex]
@@ -88,22 +89,6 @@ createProgress <- function(m){
 }
 
 
-
-
-
-# estimates Gamma using the given estimate of hidden states
-# then updates it by means of weighted Dirichlet distribution
-gibbs.sampleGamma <- function(m, hiddenStates, prior){
-  eGamma <- estimGamma(m, hiddenStates)
-  sample <- replicate(m, prior)
-  
-  # sample new transition probabilities
-  gamma <- matrix(rep.int(0, m*m), nrow = m)
-  for(i  in 1:m){
-    gamma[i, ] <- rdirichlet(1, 10 * (sample[i, ] +  eGamma[i, ]))
-  }
-  gamma 
-}
 
 
 # estimates gamma naiively by given chain of hiddenStates

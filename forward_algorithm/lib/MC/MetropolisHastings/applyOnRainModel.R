@@ -15,8 +15,8 @@ f <- list("getInitialTheta" = getInitialBernoulliTheta,
           "buildDensity"    = buildBernDensity,
           "sampleTheta"     = mh.sampleBernoulliTheta,
           "progressCallback" = NA,
-          "maxRuns" = 100,
-          "thinningFactor" = 5, 
+          "maxRuns" = 300,
+          "thinningFactor" = 1, 
           "noFixedParams" = 0, #parms$noFixedParams,
           "origTheta" = list(
             "delta" = u1,
@@ -27,7 +27,7 @@ f <- list("getInitialTheta" = getInitialBernoulliTheta,
           )
 
 
-ret <- directMHSampler(2, rainySample[1:500,], f, 0.05)
+ret <- directMHSampler(2, rainySample, f, 0.05)
 
 
 # ret$progress$time <- 1:length(ret$progress$p1)

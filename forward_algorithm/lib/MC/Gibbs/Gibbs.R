@@ -129,17 +129,20 @@ sampleContributions <- function(T, s, hiddenStates, obs, taus){
 #    getInitialTheta
 #    buildDensity
 #    sampleTheta
-GibbsSampler <- function(m, obs, f, runs){
-  n <- length(obs$obs)
+GibbsSampler <- function(m, obs, f, minConvLimit){
+  n <- 0
   
   # initialize uniformly 
   theta <- f$getInitialTheta(m)
   progress <- createProgress(m)
+  currentLimit <- 100
+  minRuns <- 20
+  deviations <- c()
   
-  for(n in 1:runs){
+  while(n < minRuns || (currentLimit > minConvLimit && n < f$maxRuns)){
     P_dens    <- f$buildDensity(theta$statePara)
     hiddenStates <- sampleHiddenStates(theta, P_dens, obs)
-    theta <- f$sampleTheta(m, hiddenStates, obs, theta$delta, n)
+    theta <- f$sampleTheta(m, hiddenStates, obs, theta, n)
     
     progress <- thetaToProgress(progress, theta, 0)
     
@@ -147,26 +150,58 @@ GibbsSampler <- function(m, obs, f, runs){
     if(suppressWarnings(!is.na(f$progressCallback))){
       f$progressCallback(n, theta, progress, hiddenStates, list())
     }
+    
+    # track progress of quantiles
+    if(n > 0){
+      q <- progressToQuantiles(progress, m)
+      if(n == 1){
+        quantileProgress <- c(q$secondQuant, q$thirdQuant)
+      }
+      else if( n > 1){
+        quantileProgress <- rbind(quantileProgress, c(q$secondQuant, q$thirdQuant))
+      }
+      mDev <- getMaxQuantDeviation(q)
+      deviations <- c(deviations, mDev)
+      
+      if(n > 1){
+        currentLimit <- mDev
+      }
+      print(paste0(mDev, ' (<', minConvLimit, ')'))
+    }
+    
+    n <- n + 1
   }
   
-  list("theta" = theta, "progress" = progress)
+  list("theta" = theta, "progress" = progress, "deviations" = deviations)
 }
 
 
 # simple estimates Bernoulli with the average of observations for each state
-gibbs.sampleBernoulli <- function(m, hiddenStates, obs){
+gibbs.sampleBernoulli <- function(m, hiddenStates, obs, f){
   probs <- rep(0.0, m)
   # the initial distribution doesn't have an attached observation
   # and hence is disregarded when sampling Bernoulli variables 
   t <- tail(hiddenStates, -1)
+  
+  # m parameters are estimated in \Gamma before
+  nfp <- f$noFixedParams - m
   for(state in 1:m){
     # extract relevant observations and their probabilities
     regimes <- t == state
     
+    n <- sum(regimes)
+    k <- sum(obs$obs[regimes])
     estimP <- sum(obs$obs[regimes]) / sum(regimes)
     #using uniform prior, we can just use this estimate
-    probs[state] <- estimP
+    if(state > nfp){
+      probs[state] <- rbeta(1, k+1, n-k+1)
+    }
+    else{
+      probs[state] <- f$origTheta$statePara[state]
+    }
   }
+  
+  
   # enforce increasing ps
   probs
 }
@@ -174,17 +209,42 @@ gibbs.sampleBernoulli <- function(m, hiddenStates, obs){
 
 
 # samples gamma, bernoulli and delta in one go
-gibbs.sampleBernoulliTheta  <- function (m, hiddenStates, obs, oldDelta, noPriorRuns){
+gibbs.sampleBernoulliTheta  <- function (m, hiddenStates, obs, theta, noPriorRuns){
   # uniform over all distributions
   alphaPrior <- rep.int(1.0 / m, m)
   
-  oldData <- theta$delta
-  oldDelta <- oldDelta * noPriorRuns
-  oldDelta[hiddenStates[1]] <- oldDelta[hiddenStates[1]] + 1
-  oldDelta <- oldDelta / (noPriorRuns + 1)
-  list("gamma" = sampleGamma(m, hiddenStates, alphaPrior), 
-       "statePara" = sampleBernoulli(m, hiddenStates, obs),  #c(0.9, 0.3), 
+
+  delta <- rep.int(0, m)
+  delta[hiddenStates[1]] <- 1
+  
+  list("gamma" = gibbs.sampleGamma(m, hiddenStates, alphaPrior, f), 
+       "statePara" = gibbs.sampleBernoulli(m, hiddenStates, obs, f), 
        "noRuns" = noPriorRuns + 1,
-       "delta" = oldDelta #c(1.0, 0.5) / 1.5
+       "delta" = delta
   )
+}
+
+# estimates Gamma using the given estimate of hidden states
+# then updates it by means of weighted Dirichlet distribution
+gibbs.sampleGamma <- function(m, hiddenStates, prior, f){
+  eGamma <- estimGamma(m, hiddenStates)
+  sample <- replicate(m, prior)
+  
+  # sample new transition probabilities
+  gamma <- matrix(rep.int(0, m*m), nrow = m)
+  nfp <- f$noFixedParams
+  
+  for(i  in 1:m){
+    if(i <= nfp){
+      # fix ith parameter and only resample the remainder
+      remainingWeight <- 1 - f$origTheta$gamma[i, i]
+      gamma[i, ][-i] <- remainingWeight * rdirichlet(1, 10 * (sample[i, ][-i] +  eGamma[i, ][-i]))
+      gamma[i,i] <- f$origTheta$gamma[i, i]
+    }
+    else{
+      gamma[i, ] <- rdirichlet(1, 10 * (sample[i, ] +  eGamma[i, ]))
+    }
+  }
+  
+  gamma 
 }
