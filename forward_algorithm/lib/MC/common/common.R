@@ -1,5 +1,6 @@
 library(ramify)
 library(testit)
+library(ecodist)
 
 source('lib/MC/common/Bernoulli.R')
 source('lib/MC/common/utility.R')
@@ -135,6 +136,27 @@ getRequiredModel <- function(paramsToEstimate){
     list("m" = 3, "paramsToEstimate" = paramsToEstimate,
          "noFixedParams" = 12 - paramsToEstimate)
   }
+}
+
+# returns the shortest distance of x to any permutation of y
+# i.e. finds the permutation of y s.t. |x-y| is minimal. 
+shortestDistanceUnderPerm <- function(x, y){
+  testit::assert(length(x) == length(y))
+  perms <- gtools::permutations(length(y), length(y), v=y, repeats.allowed = FALSE)
+  perms <- rbind(x, perms)
+  dists <- distance(perms, method='manhattan')[1:length(x)]
+  min(dists)
+}
+
+
+getEstimatedMeans <- function(m, progress){
+  n <- length(progress$d)
+  
+  progressLen <- dim(progress)[2]
+  s <- floor(n/3)
+  d <- progress[ (2*s):n, (progressLen - m + 1):progressLen]
+  means <- apply(d, 2, mean)
+  means
 }
 
 

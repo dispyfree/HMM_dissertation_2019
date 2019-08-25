@@ -29,7 +29,7 @@ ss <- 500
            "buildDensity"    = buildBernDensity,
            "sampleTheta"     = gibbs.sampleBernoulliTheta,
            "noFixedParams" = 0,
-           "maxRuns" = 100,
+           "maxRuns" = 2000,
            "origTheta" = list(
              "delta" = u1,
              "gamma" = gamma1,
@@ -49,7 +49,7 @@ ss <- 500
  
  
 # GibbsSampler(2, data, f, runs)
-ret <- GibbsSampler(2, rainySample, f, 0.05)
+ret <- GibbsSampler(2, rainySample, f, 0.01)
 
 # indices <- 1:length(ret$progress$p1)
 # plot(indices, ret$progress$p1, col='red', type='l')

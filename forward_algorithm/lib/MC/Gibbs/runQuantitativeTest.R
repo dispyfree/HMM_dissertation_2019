@@ -11,8 +11,8 @@ library(testit)
 # generates a number of Bernoulli models and measures performance
 
 # no of states
-noParamsToEstimate <- seq(2, 6, by = 1)
-sampleSizes <- seq(500, 2000, by = 500)
+noParamsToEstimate <- seq(7, 10, by = 1)
+sampleSizes <- seq(1000, 3000, by = 1000)
 
 # no of models to run (to reduce variance)
 noModelsEachSize <- 3
@@ -24,7 +24,8 @@ results <- data.frame(modelSize = c(0),
                       run = c(0), 
                       modelRun = c(0),
                       noIterations = c(0),
-                      timeSpent = c(0)
+                      timeSpent = c(0),
+                      meanDist = c(0)
                       )
 
 
@@ -54,14 +55,19 @@ for(noParams in noParamsToEstimate){
       for(modelRun in 1:runsPerModel){
         tic()
         
-        ret <- GibbsSampler(parms$m, data, f, 0.05)
+        ret <- GibbsSampler(parms$m, data, f, 0.01)
         
         timer <- toc(quiet=TRUE)
         
+        # track quality of solution
+        estMeans <- getEstimatedMeans(parms$m, ret$progress)
+        origMeans <- model$statePara
+        
         results <- rbind(results, data.frame(
-          modelSize = paramsToEstimate, ss = ss,  run = run, modelRun = modelRun,
+          modelSize = noParams, ss = ss,  run = run, modelRun = modelRun,
           noIterations = ret$theta$noRuns,
-          timeSpent = (timer$toc - timer$tic)
+          timeSpent = (timer$toc - timer$tic),
+          meanDist = shortestDistanceUnderPerm(estMeans, origMeans)
         ))
       }
     }

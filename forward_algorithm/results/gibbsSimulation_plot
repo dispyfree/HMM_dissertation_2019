@@ -6,3 +6,42 @@ aggregated <- aggregate(gibbs$timeSpent, by = list(gibbs$noParmsToEstim, gibbs$r
 aggregated$noParmsToEstim <- aggregated$Group.1
 ggplot(aggregated, aes(x=noParmsToEstim, y= x)) + geom_boxplot() + ggtitle('variance of execution times (in s) within runs of one model') + xlab('# parameters to estimate') + ylab('time')
 
+
+gibbs$ss <- as.factor(gibbs$ss)
+ggplot(gibbs, aes(x=ss, y= noParmsToEstim, color= log(timeSpent))) + geom_density_2d() + ggtitle('time spent in seconds for Bernoulli model') + xlab('sample size') + ylab('# parameters')
+
+
+-----------------------------------------------------------------------
+#QUALITY
+#newGibs 2-6
+gibbs <- gibbs[gibbs$modelSize > 0,]
+gibbs$modelSize <- as.factor(gibbs$modelSize)
+gibbs$ss <- as.factor(gibbs$ss)
+gibbsConverged <- gibbs[gibbs$noIterations < 3000,]
+
+ggplot(gibbsConverged, aes(x = modelSize, y=meanDist)) + geom_boxplot( aes(fill=ss)) + ggtitle('impact of complexity on quality of solutions')
+
+#CONVERGENCE 
+gibbsAccepted <- data.frame(modelSize = c(0), ss = c(0), rate = c(0))
+for(ss in c(500, 1000, 1500, 2000)){ for(m in 2:6){ gibbsAccepted <- rbind(gibbsAccepted, c(m, ss, sum(gibbs$noIterations < 3000 & gibbs$ss == ss & gibbs$modelSize == m) / sum(gibbs$ss == ss & gibbs$modelSize == m)))}}
+gibbsAccepted <- gibbsAccepted[-1, ]
+
+gibbsAccepted$modelSize <- as.factor(gibbsAccepted$modelSize)
+gibbsAccepted$ss <- as.factor(gibbsAccepted$ss)
+gibbsAccepted <- arrange(gibbsAccepted, desc(gibbsAccepted$ss))
+gibbsAccepted <- arrange(gibbsAccepted, gibbsAccepted$modelSize)
+
+ggplot(gibbsAccepted, aes(x = modelSize)) + geom_bar( aes(y=rate, fill=ss), stat='identity', position='dodge') + ggtitle('impact of sample size on convergence rate')  + geom_text(aes( y=rate, fill=ss), stat='identity', label=scales::percent(gibbsAccepted$rate) , position = position_dodge(0.9), vjust = 1.5, colour='grey23')
+
+
+
+#RUNTIME
+ggplot(gibbsConverged, aes(x = modelSize, y=timeSpent)) + geom_boxplot( aes(fill=ss)) + ggtitle('impact of complexity on runtime')
+
+#ITERATIONS
+ggplot(gibbsConverged, aes(x = modelSize, y=noIterations)) + geom_boxplot( aes(fill=ss)) + ggtitle('impact of complexity on number of iterations')
+
+
+
+ggplot(gibbs, aes(x=noParmsToEstim, group =c(noParmsToEstim, modelRun), y= log(timeSpent))) + geom_boxplot() + ggtitle('time spent in log(seconds) for Bernoulli model') + xlab('# parameters to estimate') + ylab('log(time)')
+

@@ -136,7 +136,7 @@ GibbsSampler <- function(m, obs, f, minConvLimit){
   theta <- f$getInitialTheta(m)
   progress <- createProgress(m)
   currentLimit <- 100
-  minRuns <- 20
+  minRuns <- 100
   deviations <- c()
   
   while(n < minRuns || (currentLimit > minConvLimit && n < f$maxRuns)){

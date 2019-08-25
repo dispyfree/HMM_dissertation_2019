@@ -52,11 +52,20 @@ The implementation herein follows the techniques presented in Zucchini\cite{zucc
  	
  	
  	\subsection{Sampling Bernoulli Probabilities}
- 		For Bernoulli probabilities, we apply a uniform distribution we apply a uniform prior on a naiive estimate. 
- 		Specifically, let the Bernoulli probability parameterising state $C_t = i$ be defined as  
- 		\[
- 			\tilde{p_i} := \frac{\setSize{t}{C_t = i \land X_t = 1}}{\setSize{t}{C_t = i}}
- 		\]
+ 		For Bernoulli probabilities, we apply a uniform prior on a naiive estimate.
+ 		With
+ 		\begin{align*}
+ 			S_i &:= \left\{ t \, | \, C_t = i \right\}\\
+ 	        k &:= \setSize{t}{C_t = i \land X_t = 1}\\
+ 			n &:= \setSize{t}{C_t = i}, \\			
+ 		\end{align*} 
+ 		we have
+ 		\begin{align*}
+ 			X_t \sim Bern(\lambda_i) \quad \forall t \in S_i\\
+ 			\sum_{t \in S_i} X_t \sim \text{Bin}(n, \lambda_i)
+ 		\end{align*}
+ 		
+ 		Then, given $n, k$, we have $\lambda_i \sim \text{Beta}(k+1, n-k+1)$\footnote{This can be easily verified by comparing the respective densities.}.
  		
  		
  	\subsection{Sampling Poisson Parameters}

@@ -1,0 +1,24 @@
+\section{Model Generation}
+For the purposes of experimentation, we implemented a simple model generator. The generator generates a model of given complexity $m$ as follows:
+\begin{itemize}
+	\item $\delta \sim \text{Dir}(1, 0.5, 0.5, \dots )$
+	\item $\lambda_i \sim U[0, 1]$
+	\item $\Gamma_{i, \cdot} \sim \text{Dir}(0.5, \dots, \Gamma_{i, i-1} = 0.5, 1, \Gamma_{i, i+1} = 0.5, \dots, 0.5)$
+\end{itemize}
+
+For benchmarking the algorithms, the following procedure was used:
+\codeBox{Benchmarking Algorithms}{
+	\begin{algorithmic}
+		\State $noParamsToEstim \gets \{2, \dots, 6\}$
+		\State $ss \gets \{500, 1000, 1500, 2000\}$
+		\State $\text{modelsEachSize} \gets 3$
+		\State $\text{runsEachModel} \gets 3$
+		\For{comb $\in \text{noParamsToEstim} \times ss \times \text{modelsEachSize}$}{
+			\State $model \gets \text{generateModel}(comb)$
+			\For{ r $\in$ runsEachModel}
+				\State performRun
+			\EndFor
+	}
+		\EndFor
+	\end{algorithmic}
+}

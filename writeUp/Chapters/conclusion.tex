@@ -1,0 +1,16 @@
+\section{Conclusion}
+This dissertation examined vanilla implementations of Metropolis Hastings and Gibb's samplers on Bernoulli models. It gave a brief account of the underlying theory, described a basic model,  elaborated on practical pitfalls for implementation and drew a comparison based on practical simulations. 
+
+Altogether, the results obtained herein paint a clear picture; the Gibb's sampler is superior to the Metropolis-Hastings sampler in almost any respect. 
+
+The mathematical work required to implement a Gibb's sampler is \textit{much} more extensive than for a Metropolis-Hastings sampler, and so are its requirements. For instance, a prerequisite for the Gibb's sampler is that it is possible to sample from the marginal distributions. This may not always be the case. What is more, the Gibb's sampler requires in-depth knowledge of the underlying model - for instance, it estimates all hidden states at each step. The Metropolis-Hastings sampler, however,  is somewhat agnostic of these details.  When those prerequisites are fulfilled, however, sections \ref{chap:gibbs} and \ref{chap:mh} clearly show that Gibb's sampler is superior with respect to most criteria. 
+
+Last but not least, while the Metropolis-Hastings sampler requires only minimal knowledge of the model it is sampling from, its robustness is much more fragile than Gibb's sampler. Noting that the acceptance rate of the Gibb's sampler is $1$, this is hardly surprising. This means that while virtually no model-specific knowledge is required, there is extensive extra work necessary to make Metropolis-Hastings work in general settings. The additional steps introduced, however, are usually not model-specific, but more data-specific. This means that they present a challenge which is specific more to dealing with different types of solution surfaces than with different types of models (and their internal structure). Hence, these challenges can be tackled in a generalised way, whereas Gibb's sampler always requires model-specific implementation. 
+
+
+\section{Prospect}
+The dissertation deliberately relied on simple implementations of both Gibb's and Metropolis-Hastings. In practice - and in almost all papers consulted for this dissertation - both samplers were used only on a very select number of models. Then, the parameters of both models are usually manually tweaked to obtain optimal results and problems (and convergence) are diagnosed manually be graphical inspection. 
+
+This usually manually applied approach is not viable for a comparison as conducted in this dissertation, yet very relevant for practical use. Case-specific analysis will show whether one or another model can excel in specific areas or under specific conditions. 
+
+In particular, the effect of prior knowledge in the form of priors can be used to aid estimation. The type of prior used  depends - of course - on the specific data and model evaluated. Again, model-specific optimisation is in order. 
