@@ -12,7 +12,7 @@ This begs the question whether small sample sizes should be used at all. Figures
 
 \begin{figure}
 	\includegraphics[width=\linewidth]{img/sim_bern_gibbs_quality.png}
-	\caption{MeanDist is defined as the minimum Manhattan distance ($L_1(\R)$) between $\delta$ of the model sampled from and the mean from the last third of the chain after convergence. Generally speaking, more samples produce solutions of higher quality }
+	\caption{MeanDist is defined as the minimum Manhattan distance ($L_1(\R)$) between $\lambda$ of the model sampled from and the mean from the last third of the chain after convergence. Generally speaking, more samples produce solutions of higher quality }
 	\label{fig:gibbs_quality}
 \end{figure}
 
@@ -32,9 +32,8 @@ This begs the question whether small sample sizes should be used at all. Figures
 
 
 Figure \ref{fig:gibbs_iterations} shows inconclusive evidence that more samples decrease the number of iterations necessary. 
-Note that increasing sample sizes increase the duration of each iteration (at the magnitude of $\mathcal{O}(T)$). On the other hand, more samples increase \textit{identifiability} of the model, which make each step more informative and could reduce the number of iterations necessary. Hence the time spent until convergence does not directly translate into iterations computed.
+Note that increasing sample sizes increase the duration of each iteration (at the magnitude of $\mathcal{O}(T)$). On the other hand, more samples increase \textit{identifiability} of the model, which make each step more informative and could reduce the number of iterations necessary. Hence the time spent until convergence does not directly translate to iterations computed.
 
-TODO: include data for model of complexity 7-10
 
 So while figure \ref{fig:gibbs_quality} clearly shows that the quality of the estimation increases with increasing sample size, figure \ref{fig:gibbs_iterations} also shows that still more iterations are needed. 
 
@@ -84,3 +83,13 @@ Also note that no chains for model complexity $6$ are shown. This is because non
 	\caption{The number of iterations needed increases with model complexity; it also increases excessively with the number of samples}
 	\label{fig:mh_iterations}
 \end{figure}
+
+
+\subsubsection*{Effective Sample Size}
+The effective sample size has been sampled several times; for both Metropolis-Hastings as well as the Gibb's sampler, the effective sample size was around $10\%$. Let us shortly break down the total sample size using this number:
+
+Assuming a chain length limit of $3,000$ and convergence after $1,000$ iterations, we extract the last third of the chain, which has about $300$ samples. Let us assume that the least probable state - according to the stationary distribution - has a probability of about $0.3$ \footnote{Note in particular that this applies to the RainModel which is used in the ''applyOnRainModel'' files for both Metroppolis Hastings as well as Gibb's Sampler. }. Hence we expect the state to be assumed about $100$ times in those samples; having an effective sample size of $10\%$ then leaves us roughly a mere $10$ samples to estimate the state's probability. 
+
+This example shows us how an initial sample of $1,000$ samples can shrink drastically to about $1\%$ of it's size for the estimation of individual parameters. Hence it becomes obvious that it is meaningful to let the chain run long after convergence has been reached. Furthermore, this example underlines that our convergence criterion is indeed quite strict, as a high number of conditions (convergence of three quantiles up to $0.01$) is used on a relatively small number of samples.
+
+Please note that the effective sample size is \textit{not} a proper proxy to estimate the number of equivalently independent drawn samples used to estimate individual parameters. Hence, this section merely outlines at what magnitudes the different effects might operate and especially which toll they take on our sample sizes. 

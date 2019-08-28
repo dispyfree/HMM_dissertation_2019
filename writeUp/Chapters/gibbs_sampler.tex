@@ -25,7 +25,7 @@ The implementation herein follows the techniques presented in Zucchini\cite{zucc
  	
  	In effect, the Dirichlet distribution can be used to sample discrete distributions with $m$ components. As equation \ref{dirich_mean} shows, the distribution's parameters determine the expected value of the different components. Also the degree to which mass is centered around the means specified above can be controlled; the higher the distribution's parameters are in magnitude, the more likely are we to draw less peaked (i.e. more uniform) distributions\footnote{This notion is captured by the term \textit{concentration parameter}}. 
  	
- 	Note that as the chain's length approach infinity, the proposal distribution will hence also converge towards a uniform distribution. However, the literature consulted for this methodology suggests to indeed use absolute counts for estimates $\tilde{\Gamma}$ instead of converting those to relative probabilities. To be comparable to this original research, we also use absolute counts in this setting. 
+ 	Note that as the chain's length approaches infinity, the proposal distribution will hence also converge towards a uniform distribution. However, the literature consulted for this methodology suggests to indeed use absolute counts for estimates $\tilde{\Gamma}$ instead of converting those to relative probabilities. To be comparable to this original research, we also use absolute counts in this setting. 
  
  
 

@@ -22,7 +22,7 @@ A \textit{Hidden Markov Model} (abbrev.: HMM) - for the purposes of this dissert
 $\left(C_1, C_2, \dots \right)$ with $m \in \nn$ distinct hidden states.\\
 The states' realisations determine the observations' distributions. 
 
-\item a transition probability matrix (abbrev.: tpm) $\tpm \in \R_+^{m \times m}$ governing the state transitions of the Markov Chain. The tpm exhaustively describes $\prob{C_{t+1}}{C_t}$.  
+\item a transition probability matrix (abbrev.: tpm) $\tpm \in \R_+^{m \times m}$ governing the state transitions of the Markov Chain. The tpm exhaustively describes $\prob{C_{t+1}}{C_t}$\footnote{The tpm is independent of $t$, hence \textit{time-homogeneous}. $C_t$ depends only on one previous time-step, which is why this process is named \textit{Markov Process}}.  
 
 \item observable random variables $X_1, X_2, \dots$. The random variable $X_t$ is distributed as the distribution indicated by $C_t$. In particular, their distribution depends \textit{only} on an unobservable state. 
 \end{itemize}
@@ -48,7 +48,7 @@ The intuitive definitions above can be described mathematically as follows:
 The dependencies can easily be visualised in the following way:
 \begin{figure}[H]
 \includegraphics[width=0.8\linewidth]{img/hmm_dependencies.png}
-\caption{Graph of dependencies within an HMM; figure as featured in Zucchini}
+\caption{Graph of dependencies within an HMM; figure as featured in Zucchini \cite{zucchini}}
 \end{figure}
 Here, each circle represents a random variable and each arrow a conditional dependency. In particular, each variable is conditionally independent of all other variables, if it is conditioned on the variable it is connected to in this graph. 
 
@@ -58,7 +58,7 @@ The aim of this dissertation is to compare two MCMC algorithms used to estimate 
 
 Although there is an abundance of research on both Metropolis Hastings and Gibb's sampler, there is a lack of direct comparisons of both methods. However, related comparisons have been drawn; for instance Ryden\cite{ryden} compared the EM algorithm with MCMC methods. 
 
-For instance, would like to empirically answer the following questions:
+For instance, we would like to empirically answer the following questions:
 \begin{itemize}
 	\item How many samples does one need to reliably estimate a model of a given complexity?
 	\item Which algorithm converges faster towards the true model?
@@ -71,13 +71,13 @@ Note that due to time constraints it is beyond the scope of this thesis to compa
 
 
 \section{Stationarity}
-This section explains an effect of Markov Chains known as \textit{stationarity}. In particular, under a set of rather weak constraints, there exists a unique, discrete probability distribution $\pi \in \R_+^m$ named the \textit{stationary distribution}, with the following properties:
+This section explains an effect of Markov Chains known as \textit{stationarity}. In particular, under a set of rather weak constraints\cite{mcnotes}, there exists a unique, discrete probability distribution $\pi \in \R_+^m$ named the \textit{stationary distribution}, with the following properties:
 \begin{align*}
 	\pi \Gamma &= \pi \\
-	P(C_t = i) &\overset{t \rightarrow \infty}{\longrightarrow} \pi_i \forall 1 \leq i \leq m \\
+	P(C_t = i) &\overset{t \rightarrow \infty}{\longrightarrow} \pi_i \quad \forall 1 \leq i \leq m \\
 \end{align*}
 
-The former condition states that when $P(C_t) \sim \pi \implies P(C_{t+1}) \sim \pi$ with $\prob{C_{t+1 = j}}{C_t = i} = \Gamma_{i, j}$ as usual. Hence, $\pi$ is \textit{invariant} under $\Gamma$ - when the chain at a point where the states are assumed with a probability given by the stationary distribution, the said probability does not change with a step in time. 
+The former condition states that when $P(C_t) \sim \pi \implies P(C_{t+1}) \sim \pi$ with $\prob{C_{t+1 = j}}{C_t = i} = \Gamma_{i, j}$ as usual. Hence, $\pi$ is \textit{invariant} under $\Gamma$ - when the chain is at a point where the states are assumed with a probability given by the stationary distribution, the states' probabilities do not change with a step in time. 
 
 The latter property states that the chain converges towards its stationary distribution as $t \rightarrow \infty$. 
 

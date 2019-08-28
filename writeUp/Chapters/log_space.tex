@@ -183,7 +183,7 @@ As defined above, this quantity can be computed by utilising
 \uP{X_1 = x_1, \dots, X_t = x_t} = \sum\limits_{k=0}^m \alpha_T(k)
 \]
 
-However, in the log-implementation, we are given $\ta{T}(k) := log\left(\alpha_T(k)\right)$ and we are interested in $log\left(\sum\limits_{k=0}^T \alpha_T(k) \right)$. How expression the sought term in terms of the log probabilities becomes obvious when reading \ref{log_simp} from the right hand side to the left hand side, e.g. we can solve the problem by applying the trick backwards. 
+However, in the log-implementation, we are given $\ta{T}(k) := log\left(\alpha_T(k)\right)$ and we are interested in $log\left(\sum\limits_{k=0}^T \alpha_T(k) \right)$. How to express the sought term in terms of the log probabilities becomes obvious when reading \ref{log_simp} from the right hand side to the left hand side, e.g. we can solve the problem by applying the trick backwards. 
 
 
 \subsubsection{Results}
@@ -193,7 +193,7 @@ As derived above, for the Simple Switcher Model, we expect a total probability o
 Figure \ref{log_impl_no_more_underflow} clearly shows that the experimental results are consistent with our predictions and that the log implementation appears to work as intended.
 
 \begin{figure}
-	\includegraphics[width=\linewidth]{../forward_algorithm/superiority_log_approach.png}
+	\includegraphics[width=\linewidth]{./img/superiority_log_approach.png}
 	\caption{The log probability of the naiive implementation deviates from the result we would expect mathematically (straight line with constant negatie slope), but conforms to our prediction with assumed underflow. As expected, log implementation does not exhibit any deviation.}
 	\label{log_impl_no_more_underflow}
 \end{figure}

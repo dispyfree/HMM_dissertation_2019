@@ -1,0 +1,130 @@
+library(testit)
+library(purrr)
+
+
+# log-space implementation for discretetime, discrete-space, time-homogeneous HMM
+# notation:
+# delta: row vector of initial probabilities; should equal stationary distribution
+# gamma: matrix of transition probabilities: \gamma_{ij} : prob . of transition 
+# from state i to j
+# P: row vector of functions; each function is the pdf or pmf of a state's 
+# associated distribution
+# observations: data frame consisting of obs (observations) and time (absolute times)
+# note: the time of the first observation must be zero if it occurs at the initial distribution
+# This is irrelevant if the initial distribution is the stationary distribution. 
+estimLogProb <- function(delta, gamma, P, obs){
+  dims <- dim(obs)
+  n <- dims[1]
+  m <- length(delta)
+  
+  #we work in differences
+  obs$time <- c(obs$time[1], diff(obs$time))
+  
+  # initial distribution
+  # \tilde{\alpha}
+  alpha_t <- log(delta)
+  
+  alphas <- matrix(alpha_t, nrow = 1)
+  
+  # work around the corner case that the first observation is at t=0
+  # this will break the log decomposition as log(0) is undefined and gamma^0 
+  # is id(m).
+  # this is achieved by manually contracting the first observation's probabilities
+  # into alpha. 
+  if(obs$time[1] == 0){
+    probs <- sapply(P, function(f){ f(obs$obs[1])})
+    P_v <- diag(probs)
+    alpha_t <- log(delta %*% P_v)
+    
+    alphas <- rbind(alphas, alpha_t)
+    
+    # remove first observation
+    obs <- obs[2:n, ]
+    dims <- dim(obs)
+    n <- dims[1]
+  }
+  
+  for (t in 1:n){
+      probs <- sapply(P,function(f){ f(obs$obs[t])})
+      P_v <- diag(probs)
+      beta <- matPow(gamma, obs$time[t]) %*% P_v
+      
+      # alpha_t(k)
+      newAlpha_t <- rep.int(-Inf, m)
+      for(k in 1:m){
+        # find maximum alpha to apply formula
+        maxA_t <- which.max(alpha_t + t(log(beta[,k])))
+        
+        newAlpha_t[k] <- alpha_t[maxA_t]  + log(beta[maxA_t, k])
+        maxContrib <- newAlpha_t[k]
+        
+        # for log(1 + x), calculate x
+        x <- -Inf
+        for(j in 1:m){
+          if(j != maxA_t){
+            optionContrib <- alpha_t[j] + log(beta[j, k])
+            if(is.finite(optionContrib)){
+              x <- addIfNotInfty(x, exp( optionContrib - maxContrib))
+            }
+          }
+        }
+        newAlpha_t[k] <- addIfNotInfty(newAlpha_t[k], suppressWarnings(log1p(x)))
+      }
+      alpha_t <- newAlpha_t
+      
+      alphas <- rbind(alphas, alpha_t)
+  }
+  list('logSum' = logSum(selectIfFinite(alpha_t)), "alphas" = alphas)
+}
+
+#shorthand for estimLogProb, takes theta
+estimTLogProb <- function(theta, P_dens, obs){
+  estimLogProb(theta$delta, theta$gamma, P_dens, obs)
+}
+
+
+addIfNotInfty <- function(no1, no2){
+  if(!is.finite(no2))
+    no1
+  else if(!is.finite(no1))
+    no2
+  else
+    no1 + no2
+}
+
+selectIfFinite <- function(x){
+  Filter(is.finite, x)
+}
+
+# source: 
+# https://en.wikipedia.org/wiki/List_of_logarithmic_identities#Summation/subtraction
+# transforms (log(a_1), log(a_2), ...) into log(sum(a_1, a_2, ...))
+logSum <- function(log_a){
+  maxA <- which.max(log_a)
+  
+  res <- log_a[maxA]
+  if(length(log_a) == 1)
+    res
+  else{
+    x <- sum(unlist(map(log_a[-maxA], function(log_a_i){
+      exp(log_a_i - log_a[maxA])
+    })))
+    
+    res + log1p(x)
+  }
+}
+
+
+matPow <- function(mat, p){
+  testit::assert(p >= 0)
+  if(p == 0){
+    dims <- dim(mat)
+    diag(dims[1])
+  }
+  else if(p  == 1){
+    mat
+  }else{
+    matPow(mat, p-1) %*% mat
+  }
+  
+}

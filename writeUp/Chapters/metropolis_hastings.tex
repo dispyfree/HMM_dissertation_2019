@@ -313,8 +313,6 @@ Figure \ref{fig:carreCorrectedWorks} clearly shows that the resulting distributi
 
 Note that this simple, approximative method can be used for arbitrary sampling methods. While it is not necessary to correct for the ''bumping'' method, the ''bumping'' method alone can not be used to enforce contraints, for instance that the individual values some to one. 
 
-Note also that combining the aforementioned projection method (i.e. dividing by the sum to achieve a sum to $1$) does not yield uniform results, even when applied to samples which are sampled using the ''bumping'' method. As shown above, this method generates uniformly distributed values - which are not uniform after having undergone said transformation. 
-
 
 
 \subsection{Final Implementation}
@@ -346,11 +344,10 @@ All parameters are ''bumped back'' with the ''Bumping method'' as described abov
 
 A sample chain with this configuration is shown in \ref{fig:sticky_chain_is_okay}. Note that because of the very low acceptance ratio, the chain is quite ''sticky'' (i.e.: highly autocorrelated). This can be alleviated by applying a technique called \textit{thinning}, which is simply leaving out every xth element of the chain. As the focus of this dissertation focuses on the runtime complexity of the algorithm, we do not use thinning. 
 
-Note that the comparatively high standard deviation of our proposals (which are due to the low accetance rate sought) leads to high jumps in the empirical distribution function. Hence, the criterion developed in chapter \ref{chap:stationarity} needs to be modified; practical experiments have shown that a threshold of $0.1$ for the maximum differences between quanties of the empirical distribution function yields reasonable results. 
 
 
 \subsubsection{Adjusting $\sigma$}
-When using Metropolis Hastings as sampling method, the choice of $\sigma$ governs the acceptance rate. It is commonly known that for high dimensions, $0.23$ is the ideal acceptance rate. If $\sigma$ is chosen too small, the acceptance rate will be too high; conversely, if $\sigma$ is too big, the acceptance rate will be lower. 
+When using Metropolis Hastings as sampling method, the choice of $\sigma$ governs the acceptance rate. Atchadé\cite{atchade} has shown that under certain conditions, for high dimensions, $0.23$ is the ideal acceptance rate. If $\sigma$ is chosen too small, the acceptance rate will be too high; conversely, if $\sigma$ is too big, the acceptance rate will be lower. 
 
 Especially as the complexity of the model increases, lower $\sigma$ are in order\footnote{To understand why, consider an $m$-dimensional standard normal random variable with identity as the covariance matrix. If we consider any point at a fixed distance $d$ from the mean, the density at this point will decrease as $m$ increases, keeping $d$ fixed. $d$ can be thought of as a proxy for $\sigma$, so a Metropolis Hastings algorithm will produce less likely samples for the same $\sigma$ as $m$ increases. }. We use the following very simple scheme to adjust $\sigma$:
 
@@ -377,7 +374,8 @@ As outlined in chapter \ref{chap:stationarity}, convergence is measured by the m
 
 Unfortunately, as model complexity increases, $\sigma$ will be scaled down as explained in the preceding section. This has a direct effect on the expected distance the Metropolis Hastings algorithm is going to explore. Note that
 \begin{align}
-  \expect{|X|} = \sigma \sqrt{\frac{2}{\pi}} \propto \sigma
+  \expect{|X|} = \sigma \sqrt{\frac{2}{\pi}} \propto \sigma 
+  \quad \text{for} X \sim \mathcal{N}(0, \sigma^2)
 \end{align}
 i.e. the expected length of one step (i.e. the difference to the next proposal when using a normal distribution as proposal distribution) of the Metropolis Hastings Algorithm is directly proportional to $\sigma$. The smaller $\sigma$ becomes, the shorter the steps of the chain. 
 

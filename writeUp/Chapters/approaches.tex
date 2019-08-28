@@ -1,6 +1,6 @@
 There are several approaches to solve for $\Theta$ or $\allC$, the most common being Maximum Likelihood Estimation (abbrev. MLE), Expectation-Maximization (abbrev. EM) and Markov Chain Monte Carlo Methods (abbrev. MCMC). This thesis shall explore the latter in depth. Nonetheless, we provide a brief account of the other techniques as well.
 
-In order to outline the core ideas behind each approach, a few preliminaries are needed. These are shortly introduced. The presentation herein follows the notation in Zucchini.
+In order to outline the core ideas behind each approach, a few preliminaries are needed. These are shortly introduced. The presentation herein follows the notation in Zucchini\cite{zucchini}.
 
 
 \section{Forward Probabilities}
@@ -20,19 +20,18 @@ For $t=0$ this is obvious, as we have $\alpha_0 = \delta$\footnote{(there are no
 
 Then we able to compute $\alpha_{t+1}(i)$ as follows:
 \begin{align}
-	\alpha_{t+1}(i) 
-	&=  P\left(X^{(t+1)} = x^{(t+1)},  C_{t+1} = i\right) \\
-	 &=  \sum_{k=1}^m P\left(X^{(t+1)} = x^{(t+1)}, C_{t+1} = i, C_t = k\right) \\ 
-	 &= \sum_{k=1}^m \prob{X^{(t+1)} = x^{(t+1)}, C_t = k}{ C_{t+1} = i} P \left( C_{t+1} = i \right) \\
-	 &= \sum_{k=1}^m \prob{X^{(t)} = x^{(t)}, C_t = k}{ C_{t+1} = i} \prob{X_{t+1} = x_{t+1}}{ C_{t+1} = i} P \left( C_{t+1} = i \right) \\
-	 &= \sum_{k=1}^m P \left( X^{(t)} = x^{(t)}, C_t = k, C_{t+1} = i  \right) p_i(x_{t+1}) \\
+	\alpha_{t+1}(i)
+	&=  P\left(X^{(t+1)} = x^{(t+1)},  C_{t+1} = i\right) \nonumber\\
+	 &=  \sum_{k=1}^m P\left(X^{(t+1)} = x^{(t+1)}, C_{t+1} = i, C_t = k\right) \nonumber\\ 
+	 &= \sum_{k=1}^m \prob{X^{(t+1)} = x^{(t+1)}, C_t = k}{ C_{t+1} = i} P \left( C_{t+1} = i \right) \nonumber\\
+	 &= \sum_{k=1}^m \prob{X^{(t)} = x^{(t)}, C_t = k}{ C_{t+1} = i} \prob{X_{t+1} = x_{t+1}}{ C_{t+1} = i} P \left( C_{t+1} = i \right) \nonumber\\
+	 &= \sum_{k=1}^m P \left( X^{(t)} = x^{(t)}, C_t = k, C_{t+1} = i  \right) p_i(x_{t+1}) \nonumber\\
 	 &= \sum_{k=1}^m \prob{
-	 	X^{(t)} = x^{(t)}, C_{t+1} = i}{C_t = k} P\left( C_t = k\right) p_i(x_{t+1})\\
+	 	X^{(t)} = x^{(t)}, C_{t+1} = i}{C_t = k} P\left( C_t = k\right) p_i(x_{t+1})\nonumber\\
  	&= \sum_{k=1}^m \prob{
- 		X^{(t)} = x^{(t)}}{C_t = k} \prob{ C_{t+1} = i}{C_t = k} P\left( C_t = k\right) p_i(x_{t+1})\\
- 	&=  \sum_{k=1}^m \alpha_t(k)  \, \tpm_{k, i} \, p_i(x_{t+1}) \\
- 	\label{llrecursion}
-\end{align}
+ 		X^{(t)} = x^{(t)}}{C_t = k} \prob{ C_{t+1} = i}{C_t = k} P\left( C_t = k\right) p_i(x_{t+1})\nonumber\\
+ 	&=  \sum_{k=1}^m \alpha_t(k)  \, \tpm_{k, i} \, p_i(x_{t+1}) \label{llrecursion}
+ 	\end{align}
 
 Note that there are $\bigO{m}$ calculations for each time step and entry of $\alpha_t$, hence $\bigO{m^2}$ calculations for each $\alpha_t$ and $\bigO{T m^2}$ calculations for processing of the entire chain. Hence, this approach is also suitable for very long chains.
  
@@ -83,7 +82,6 @@ As we have developed a way to compute $\prob{X^T=x^t}{\Theta}$, we can use an ap
 \end{align}
 $\uP{\Theta}$ is also referred to as the \textit{prior distribution}.
 
-TODO: distinguish MLE from Bayes further
 
 \textit{Gradient-based} methods are commonly used to (locally) estimate $\Theta$ by choosing it as to maximise the probability of the data. 
 

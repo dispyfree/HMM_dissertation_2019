@@ -31,7 +31,7 @@ The indicator functions $1_{X_i \leq x}$ each assume $1$ if $X_i \leq x$ and $0$
 
 By the \textit{Glivenko-Cantelli theorem}, we have
 \[
-	\norm{F_n - F}_\infty \overset{a.s.}{\longrightarrow} 0
+	\norm{\hat{F}_n - F}_\infty \overset{a.s.}{\longrightarrow} 0
 \]
 
 Once the chain has reached its stationary regime, we expect the empirical distribution function to have converged as well. Hence, we can use differences between empirical distribution functions of the chain at different points in time to measure convergence to stationarity. We adopt an idea originally presented by Dr. Pieralberto Guarniero in a practical seminar in the context of Riemann sums: 
@@ -79,16 +79,16 @@ Also, the second part comprises elements from about $X_{40}, \dots, X_{80}$ wher
 	\label{splitChainQuantileCourse}
 \end{figure}
 
-\subsubsection*{Insignificance of $\delta$}5
+\subsubsection*{Insignificance of $\delta$}
 Also note that for large sample sizes, the choice of $\delta$ usually becomes irrelevant. This is because compared to the overall length of the chain, the contribution of $\delta$ tends towards insignificance. For this reason, $\delta$ is hardly estimable, i.e. we expect great fluctuation in its quantiles. Hence, for convergence analysis, $\delta$ is discarded. 
 \vspace{0.5cm}
 
 In conclusion, we have developed a quantitative measure for stationarity of the chain's distribution. 
-We shall adopt the criterion developed herein with a cut-off criterion of $0.05$. In our experiments, a convergence up to said threshold usually implied a good conversion of the overall sampling distribution.
+We shall adopt the criterion developed herein with a cut-off criterion of $0.01$. In our experiments, a convergence up to said threshold usually implied a good conversion of the overall sampling distribution.
  That is to say: 
 
 \begin{center}
-We assume that the chain has reached convergence once the maximum difference between the $0.25, 0.5$ and $0.75$ quantiles of the second and third part are smaller than $0.05$. 
+We assume that the chain has reached convergence once the maximum difference between the $0.25, 0.5$ and $0.75$ quantiles of the second and third part are smaller than $0.01$. 
 \end{center}
 
 
@@ -157,8 +157,8 @@ We expect $P(C_t = i)$ to be high (i.e. $i$ likely to be sampled as the hidden s
 Furthermore, once the chain as reached stationarity, this allows us to compute the expected number of deviated states: it is $ T * \omega$. 
 
 \begin{figure}
-	\includegraphics[width=\linewidth]{../forward_algorithm/l1_hidden_state_distance.png}
-	\caption{The red line indicates the expected number of wrong hidden states}
+	\includegraphics[width=\linewidth]{./img/l1_hidden_state_distance.png}
+	\caption{The red line indicates the expected number of wrong hidden states, the blue number the number of wrong hidden states at points $t$ of the sampled chain. We clearly see that after about $70$ iterations, the algorithm has reached the expected value. }
 	\label{l1_wrong_states}
 \end{figure}
 

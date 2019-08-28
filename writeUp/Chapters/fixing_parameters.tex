@@ -1,9 +1,9 @@
 \subsection{Gradual increase of model complexity}
 
-Let us shortly consider the increase of model complexity as a function of $m$, the number of states. There are $m^2$ parameters to be estimated for $\Gamma$, and $m$ parameters, one for each state's distribution. Let us neglect $\delta$ in this argument, as 
-it quickly becomes insignificant as the sample size increases.
+Let us shortly consider the increase of model complexity as a function of $m$, the number of states. There are $m (m-1)$ parameters to be estimated for $\Gamma$, and $m$ parameters, one for each state's distribution. Let us neglect $\delta$ in this argument, as 
+it quickly becomes insignificant as the sample size increases. 
 
-This means that for $m=2$, we have $6$ parameters to estimate and for $m=3$, this number rises already to $12$. We observe that for $m=2$, convergence is reached quite fast with our vanilla implementation. However, for $m=3$ the picture is markedly different: the number of iterations needed for convergence becomes infeasibly large.
+This means that for $m=2$, we have $6$ parameters (4 parameters to estimate) and for $m=3$, this number rises already to $12$ (8). We observe that for $m=2$, convergence is reached quite fast with our vanilla implementation. However, for $m=3$ the picture is markedly different: the number of iterations needed for convergence becomes large.
  
 We suspect that complexity rises exponentially in the number of parameters to estimate. If this is indeed the case, $m=2$ and $m=3$, or $6$ and $12$ parameters respectively, are indeed extremely different in terms of computational complexity. Hence, we need to find a means to analyse complexity in a more fine-grained manner. 
 
